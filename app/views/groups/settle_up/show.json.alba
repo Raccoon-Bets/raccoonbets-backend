@@ -1,0 +1,2 @@
+# frozen_string_literal: true
+{currency: @currency, note: @note, transfers: @transfers}.to_json

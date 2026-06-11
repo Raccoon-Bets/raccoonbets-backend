@@ -1,0 +1,11 @@
+# Solid Queue recurring tasks. Times are UTC.
+default: &default
+  closing_soon_scan:
+    class: Notifications::ClosingSoonScanJob
+    schedule: every 5 minutes
+
+development:
+  <<: *default
+
+production:
+  <<: *default

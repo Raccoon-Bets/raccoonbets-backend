@@ -1,0 +1,7 @@
+<%= t("notification_mailer.settlement.heading") %>
+
+<%= t("notification_mailer.settlement.body", kind: t("notification_mailer.settlement.kinds.#{@kind}", default: @kind), group: @settlement.group.name) %>
+
+<%= @link %>
+
+<%= t("notification_mailer.shared.manage") %>: <%= Notifications::Links.group_url(@settlement.group, "/account") %>

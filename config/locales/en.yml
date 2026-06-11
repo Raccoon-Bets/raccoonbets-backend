@@ -1,0 +1,227 @@
+en:
+  activerecord:
+    models:
+      user: user
+      group: group
+      membership: membership
+      invitation: invitation
+      market: market
+      outcome: outcome
+      position: position
+      ledger_entry: ledger entry
+      settlement: settlement
+      market_event: market event
+    attributes:
+      user:
+        name: name
+        email: email address
+        locale: locale
+        venmo_handle: Venmo handle
+        paypal_handle: PayPal handle
+        cashapp_cashtag: Cash App cashtag
+        password: password
+        password_confirmation: password confirmation
+      group:
+        name: name
+        subdomain: subdomain
+        currency: currency
+        min_amount_cents: minimum amount
+        max_amount_cents: maximum amount
+        status: status
+      membership:
+        user_id: member
+        role: role
+        status: status
+      invitation:
+        email: email address
+        role: role
+        expires_at: expiration
+      market:
+        title: title
+        description: description
+        locks_at: lock time
+        status: status
+        creator: creator
+        oracle: oracle
+        outcomes: outcomes
+      outcome:
+        name: name
+        position: position
+      position:
+        outcome: outcome
+        membership: member
+        amount_cents: amount
+      ledger_entry:
+        amount_cents: amount
+        entry_type: entry type
+        reverses_entry: reversed entry
+      settlement:
+        payer: payer
+        payee: payee
+        recorded_by: recorder
+        amount_cents: amount
+        payment_method: payment method
+        note: note
+      market_event:
+        action: action
+        actor: actor
+        outcome: outcome
+        note: note
+    errors:
+      models:
+        market:
+          attributes:
+            outcomes:
+              too_few: must include at least two outcomes
+              duplicate_names: must not repeat outcome names
+            oracle:
+              not_a_member: must be an active member of this group
+            creator:
+              not_a_member: must be a member of this group
+            locks_at:
+              must_be_future: must be in the future
+        position:
+          attributes:
+            base:
+              trading_closed: trading is closed for this market
+            outcome:
+              wrong_market: must be one of this market’s outcomes
+            membership:
+              not_a_member: must be an active member of this group
+        settlement:
+          attributes:
+            payer:
+              not_a_member: must be an active member of this group
+            payee:
+              same_as_payer: must be a different member than the payer
+              not_a_member: must be an active member of this group
+            recorded_by:
+              not_a_member: must be an active member of this group
+  application_controller:
+    errors:
+      internal_server_error: An internal error has occurred.
+  rodauth_authentication:
+    errors:
+      not_a_superadmin: You are not authorized to do that.
+  group_scoping:
+    errors:
+      not_a_member: You are not a member of this group.
+      not_an_admin: You must be a group admin to do that.
+      not_oracle_or_admin: Only this market’s oracle or a group admin can do that.
+  markets:
+    resolver:
+      errors:
+        already_resolved: This market has already been resolved; correct it instead.
+        not_open: This market is not open.
+        not_locked: This market cannot be resolved before trading closes.
+        already_voided: This market has already been voided.
+        not_resolved: Only a resolved market can be corrected.
+        same_outcome: This market is already resolved to that outcome.
+        wrong_market: That outcome does not belong to this market.
+  groups:
+    members:
+      errors:
+        last_admin: A group must keep at least one admin.
+    markets:
+      errors:
+        not_creator: Only the market’s creator can edit it.
+        not_open: This market is no longer open.
+    positions:
+      errors:
+        trading_closed: Trading is closed for this market.
+    settlements:
+      errors:
+        not_a_party: You can only record or void settlements you are a party to.
+        already_voided: This settlement has already been voided.
+    settle_up:
+      note: Raccoon Bets — %{group}
+  invitations:
+    errors:
+      no_longer_valid: This invitation is no longer valid.
+  invitation_mailer:
+    shared:
+      paste_url: "Or copy and paste this URL into your browser:"
+    invite:
+      subject: You’re invited to %{group} on Raccoon Bets
+      heading: Join %{group} on Raccoon Bets
+      intro: "%{inviter} invited you to join %{group} on Raccoon Bets. Click the button below to accept:"
+      button: Accept your invitation
+      ignore: If you weren’t expecting this invitation, ignore this email.
+      text_intro: "%{inviter} invited you to join %{group} on Raccoon Bets. Accept the invitation by visiting:"
+  notification_mailer:
+    shared:
+      view_button: "View it"
+      manage: "Manage your notifications"
+    market_resolved:
+      subject: "Resolved: %{title}"
+      heading: "A market you have a position on was resolved"
+      body: "%{title} was %{kind}. See how you did."
+      kinds:
+        resolved: "resolved"
+        voided: "voided"
+        corrected: "corrected"
+    market_created:
+      subject: "New market in %{group}"
+      heading: "A new market is open"
+      body: "%{title} was just opened in %{group}. Take a position."
+    settlement:
+      subject: "Settle-up update in %{group}"
+      heading: "A settlement involving you"
+      body: "A settlement in %{group} was %{kind}."
+      kinds:
+        recorded: "recorded"
+        voided: "voided"
+    market_closing_soon:
+      subject: "Closing soon: %{title}"
+      heading: "A market is about to close"
+      body: "Trading on %{title} closes soon — last chance to get in."
+  rodauth_mailer:
+    shared:
+      paste_url: "Or copy and paste this URL into your browser:"
+    verify_account:
+      subject: Verify your Raccoon Bets account
+      heading: Verify your Raccoon Bets account
+      intro: "Welcome to Raccoon Bets! Click the button below to verify your account:"
+      button: Verify your account
+      ignore: If you didn’t sign up, ignore this email.
+      text_intro: "Verify your Raccoon Bets account by visiting:"
+    reset_password:
+      subject: Reset your Raccoon Bets password
+      heading: Reset your Raccoon Bets password
+      intro: "We received a request to reset your password. Click the button below to choose a new one:"
+      button: Reset your password
+      ignore: If you didn’t request a password reset, ignore this email.
+      text_intro: "Reset your Raccoon Bets password by visiting:"
+  errors:
+    messages:
+      accepted: must be accepted
+      blank: can’t be blank
+      confirmation: doesn’t match confirmation
+      empty: can’t be empty
+      equal_to: must be equal to %{count}
+      even: must be even
+      exclusion: reserved
+      greater_than: must be greater than %{count}
+      greater_than_or_equal_to: must be greater than or equal to %{count}
+      inclusion: not acceptable
+      incorrect_type: incorrect type
+      invalid: invalid
+      invalid_email: not a valid email address
+      less_than: must be less than %{count}
+      less_than_or_equal_to: must be less than or equal to %{count}
+      not_a_number: not a number
+      not_an_integer: not an integer
+      odd: must be odd
+      taken: already taken
+      unchangeable: cannot be changed
+      too_long: must be %{count} characters or shorter
+      too_short: must be %{count} characters or longer
+      wrong_length: must be %{count} characters long
+      invalid_date: not a valid date
+      invalid_time: not a valid time
+      invalid_datetime: not a valid date and time
+      is_at: must be at %{restriction}
+      before: must be before %{restriction}
+      on_or_before: must be on or before %{restriction}
+      after: must be after %{restriction}
+      on_or_after: must be on or after %{restriction}

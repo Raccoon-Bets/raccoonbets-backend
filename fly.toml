@@ -1,0 +1,59 @@
+# fly.toml app configuration file for raccoonbets-backend
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+# This app is private: it has no public IPs and is reachable only via
+# raccoonbets-backend.flycast from the raccoonbets-proxy app.
+
+app = 'raccoonbets-backend'
+primary_region = 'sjc'
+console_command = '/rails/bin/rails console'
+
+[build]
+
+[deploy]
+  release_command = './bin/rails db:prepare'
+
+[processes]
+  app = './bin/rails server'
+
+[http_service]
+  internal_port = 3000
+  # Keep one machine always-on so the in-Puma Solid Queue scheduler runs the
+  # recurring closing-soon scan reliably (suspend would freeze it).
+  auto_stop_machines = 'suspend'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[checks]
+  [checks.status]
+    port = 3000
+    type = 'http'
+    interval = '10s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'GET'
+    path = '/up'
+    protocol = 'http'
+    tls_skip_verify = false
+
+    [checks.status.headers]
+      X-Forwarded-Proto = 'https'
+
+# Swap absorbs memory spikes instead of letting the kernel OOM-kill the
+# server; Puma plus the in-Puma Solid Queue processes need the headroom.
+swap_size_mb = 512
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3000
+  path = '/metrics'
+
+[[statics]]
+  guest_path = '/rails/public'
+  url_prefix = '/'

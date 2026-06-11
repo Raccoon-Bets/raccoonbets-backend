@@ -1,0 +1,7 @@
+<%= t("notification_mailer.market_created.heading") %>
+
+<%= t("notification_mailer.market_created.body", group: @market.group.name, title: @market.title) %>
+
+<%= @link %>
+
+<%= t("notification_mailer.shared.manage") %>: <%= Notifications::Links.group_url(@market.group, "/account") %>

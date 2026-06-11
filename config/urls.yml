@@ -1,0 +1,19 @@
+development:
+  backend: "http://api.lvh.me:5000"
+  frontend: "http://lvh.me:5173"
+  cable: "ws://ws.lvh.me:8080/cable"
+
+test:
+  backend: "http://app.test.host"
+  frontend: "http://test.host"
+  cable: "ws://backend.example.com/cable"
+
+cypress:
+  backend: "http://127.0.0.1:5000"
+  frontend: "http://lvh.me:4173"
+  cable: "ws://127.0.0.1:8080/cable"
+
+production:
+  backend: "https://api.raccoonbets.org"
+  frontend: "https://raccoonbets.org"
+  cable: "wss://api.raccoonbets.org/cable"

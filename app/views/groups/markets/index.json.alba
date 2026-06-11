@@ -1,0 +1,2 @@
+# frozen_string_literal: true
+MarketSerializer.new(@markets, params: {pools: @pools, my_positions: @my_positions, currency: @currency}).serialize

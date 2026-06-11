@@ -1,0 +1,7 @@
+<%= t("notification_mailer.market_resolved.heading") %>
+
+<%= t("notification_mailer.market_resolved.body", title: @market.title, kind: t("notification_mailer.market_resolved.kinds.#{@kind}", default: @kind)) %>
+
+<%= @link %>
+
+<%= t("notification_mailer.shared.manage") %>: <%= Notifications::Links.group_url(@market.group, "/account") %>

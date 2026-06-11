@@ -1,0 +1,7 @@
+#!/bin/bash
+# Runs the in-process Action Cable server (the AnyCable-free fallback; set
+# ACTION_CABLE_ADAPTER=redis to bypass AnyCable broadcasts too).
+
+cd "$(dirname "$0")/.." || exit
+
+bundle exec puma -p 8080 cable/config.ru --pidfile tmp/pids/cable.pid "$@"

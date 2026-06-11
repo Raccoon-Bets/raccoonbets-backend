@@ -1,0 +1,17 @@
+development:
+  adapter: <%= ENV.fetch("ACTION_CABLE_ADAPTER", "any_cable") %>
+  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
+  channel_prefix: raccoonbets_development
+
+test:
+  adapter: test
+
+# Positions are placed (and so broadcast) during e2e runs, so the cypress server
+# needs a working broadcast adapter even when no anycable-go is listening.
+cypress:
+  adapter: <%= ENV.fetch("ACTION_CABLE_ADAPTER", "any_cable") %>
+  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
+  channel_prefix: raccoonbets_cypress
+
+production:
+  adapter: any_cable

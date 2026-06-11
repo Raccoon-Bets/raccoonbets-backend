@@ -1,0 +1,27 @@
+# Bundler
+/.bundle
+
+# Rails runtime
+/log/*
+!/log/.keep
+/tmp/*
+!/tmp/.keep
+/storage/*
+!/storage/.keep
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# RSpec
+/spec/examples.txt
+
+# Credentials / secrets
+/config/master.key
+/config/credentials/*.key
+.env*
+
+# Downloaded anycable-go binary (bin/anycable-go fetches it)
+/bin/dist
+
+# YARD output
+/doc/app

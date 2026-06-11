@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+if @membership
+  GroupSerializer.new(@group, params: { membership: @membership }).serialize
+else
+  GroupMinimalSerializer.new(@group, params: { join_requested: @join_requested }).serialize
+end

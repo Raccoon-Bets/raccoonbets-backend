@@ -1,0 +1,11 @@
+<h1><%= t("notification_mailer.market_closing_soon.heading") %></h1>
+
+<p><%= t("notification_mailer.market_closing_soon.body", title: @market.title) %></p>
+
+<p>
+  <a href="<%= @link %>" style="display:inline-block;padding:10px 20px;background:#0066cc;color:#fff;text-decoration:none;border-radius:4px;"><%= t("notification_mailer.shared.view_button") %></a>
+</p>
+
+<p><%= @link %></p>
+
+<p><a href="<%= Notifications::Links.group_url(@market.group, "/account") %>"><%= t("notification_mailer.shared.manage") %></a></p>
