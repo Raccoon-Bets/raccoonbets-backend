@@ -49,6 +49,41 @@ RSpec.describe "/verify-account" do
     end
   end
 
+  describe "POST /signup (verification email host)" do
+    around(:each) do |example|
+      original = Rails.application.config.x.frontend_origin_patterns
+      Rails.application.config.x.frontend_origin_patterns =
+          original + [%r{\Ahttps://([a-z0-9-]+\.)?raccoonbets\.test\z}]
+      example.run
+    ensure
+      Rails.application.config.x.frontend_origin_patterns = original
+    end
+
+    def signup_from(origin)
+      post "/signup",
+           params:  {login: email, password:, name: "Verify Me"},
+           headers: {"Origin" => origin},
+           as:      :json
+    end
+
+    it "links the verification email to a trusted requesting origin" do
+      signup_from "https://trash-pandas.raccoonbets.test"
+
+      mail = ActionMailer::Base.deliveries.last
+      expect(mail.text_part.body.decoded).
+          to include("https://trash-pandas.raccoonbets.test/verify-account?key=")
+      expect(mail.html_part.body.decoded).
+          to include("https://trash-pandas.raccoonbets.test/verify-account?key=")
+    end
+
+    it "falls back to the apex frontend for an untrusted origin" do
+      signup_from "https://evil.example.com"
+
+      mail = ActionMailer::Base.deliveries.last
+      expect(mail.text_part.body.decoded).to include("http://test.host/verify-account?key=")
+    end
+  end
+
   describe "POST /login (unverified)" do
     it "rejects the login with the Rodauth unverified-account error" do
       signup

@@ -108,6 +108,17 @@ class RodauthApp < Rodauth::Rails::App
 
     email_from "donotreply@raccoonbets.org"
 
+    # Resolves the frontend origin a flow started on (the apex or a group
+    # subdomain), validated against the trusted set so emailed links and
+    # redirects can't be pointed at an attacker-controlled host.
+    trusted_frontend_origin = ->(origin) do
+      patterns = Rails.application.config.x.frontend_origin_patterns
+      trusted = origin.present? && patterns.any? do |pattern|
+        pattern.kind_of?(Regexp) ? pattern.match?(origin) : pattern == origin
+      end
+      trusted ? origin : Rails.application.config.urls.frontend
+    end
+
     send_reset_password_email do
       frontend = Rails.application.config.urls.frontend
       token_key = convert_email_token_key(reset_password_key_value)
@@ -116,8 +127,11 @@ class RodauthApp < Rodauth::Rails::App
       RodauthMailer.reset_password(account[:email], link, account[:locale]).deliver_now
     end
 
+    # Signup is a CORS request from the SPA, so the Origin header carries the
+    # host the visitor signed up on; the verification link returns them there
+    # (a group subdomain keeps its join-intent and return-to state).
     send_verify_account_email do
-      frontend = Rails.application.config.urls.frontend
+      frontend = trusted_frontend_origin.call(request.env["HTTP_ORIGIN"])
       token_key = convert_email_token_key(verify_account_key_value)
       token = "#{account_id}#{token_separator}#{token_key}"
       link = "#{frontend}/verify-account?key=#{token}"
@@ -190,17 +204,9 @@ class RodauthApp < Rodauth::Rails::App
       super() && account[account_status_column] == account_unverified_status_value
     end
 
-    # Resolve the frontend origin the flow started on (apex or a group
-    # subdomain), validated against the trusted set so the post-auth redirect
-    # can't be pointed at an attacker-controlled host.
-    oauth_frontend_origin = -> do
-      origin = omniauth_origin
-      patterns = Rails.application.config.x.frontend_origin_patterns
-      trusted = origin.present? && patterns.any? do |pattern|
-        pattern.kind_of?(Regexp) ? pattern.match?(origin) : pattern == origin
-      end
-      trusted ? origin : Rails.application.config.urls.frontend
-    end
+    # The OmniAuth request phase recorded the SPA origin the flow started on;
+    # the post-auth redirect returns there once it passes the trusted set.
+    oauth_frontend_origin = -> { trusted_frontend_origin.call(omniauth_origin) }
 
     # Send OmniAuth failures (denied consent, closed/unmatched account) to the
     # SPA's callback with an error rather than Rodauth's default HTML flash.
