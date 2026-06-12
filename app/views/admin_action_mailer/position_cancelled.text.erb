@@ -1,0 +1,7 @@
+<%= t("admin_action_mailer.position_cancelled.heading") %>
+
+<%= t("admin_action_mailer.position_cancelled.body", actor: @actor_name, amount: @amount, title: @market.title, group: @market.group.name) %>
+
+<%= @link %>
+
+<%= t("admin_action_mailer.shared.mandatory") %>

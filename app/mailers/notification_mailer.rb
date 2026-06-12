@@ -42,12 +42,4 @@ class NotificationMailer < ApplicationMailer
     @link = Notifications::Links.group_url(market.group, "/markets/#{market.id}")
     mail_localized user, "notification_mailer.market_closing_soon.subject", title: market.title
   end
-
-  private
-
-  def mail_localized(user, subject_key, **subject_args)
-    I18n.with_locale(user.locale) do
-      mail to: user.email, subject: I18n.t(subject_key, **subject_args)
-    end
-  end
 end

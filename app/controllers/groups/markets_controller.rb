@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 # RESTful controller for a {Group}'s {Market}s. Members only. Any active member
-# can create a market; only its creator can edit it, and only while it is open.
+# can create a market; its creator or a group admin can edit it while it is
+# open, and a group admin can delete it while no money has moved. When an edit
+# or delete lands on a market with positions, every other position holder is
+# emailed what happened ({AdminActionMailer}).
 #
 # List and detail responses include per-outcome pool totals and the viewing
 # member's own position; the detail response also includes every position with
@@ -13,7 +16,11 @@ class Groups::MarketsController < ApplicationController
 
   before_action :authenticate_user!
   before_action :require_membership!
-  before_action :find_market, only: %i[show update]
+  before_action :find_market, only: %i[show update destroy]
+  before_action :require_group_admin!, only: :destroy
+
+  # The edited fields position holders are told about.
+  NOTIFIED_EDIT_FIELDS = %w[title description locks_at].freeze
 
   # Lists the group's markets: open markets first by soonest `locks_at`, then
   # resolved and voided markets, most recently concluded first.
@@ -79,8 +86,9 @@ class Groups::MarketsController < ApplicationController
     respond_with @market
   end
 
-  # Updates a market's `title` and `description` (and `locks_at`, until the
-  # first position is placed). Creator only, while the market is open.
+  # Updates a market's `title`, `description`, and `locks_at`. Creator or
+  # group admin, while the market is open. When the market has positions,
+  # every other position holder is emailed a summary of what changed.
   #
   # Routes
   # ------
@@ -95,10 +103,38 @@ class Groups::MarketsController < ApplicationController
   # | `:market` | Parameterized Market attributes (`title`, `description`, `locks_at`). |
 
   def update
-    return render_not_creator unless @market.creator_id == current_membership.id
+    return render_not_editor unless editor?
     return render_not_open unless @market.open?
 
-    GroupChannel.broadcast_event current_group, :market_updated, market_id: @market.id if @market.update(market_params)
+    if @market.update(market_params)
+      GroupChannel.broadcast_event current_group, :market_updated, market_id: @market.id
+      notify_position_holders_of_edit
+    end
+    respond_with @market
+  end
+
+  # Deletes a market that has not touched money, cascading its positions.
+  # Group admins only. Every position holder except the acting admin is
+  # emailed. A market with ledger entries (resolved, or voided after
+  # resolution) cannot be deleted — the model's ledger restriction renders
+  # 422; the existing void/correct flows are the only paths once money has
+  # moved.
+  #
+  # Routes
+  # ------
+  #
+  # * `DELETE /groups/:group_id/markets/:id.json`
+
+  def destroy
+    recipients = other_position_holders
+    title      = @market.title
+    if @market.destroy
+      GroupChannel.broadcast_event current_group, :market_deleted, market_id: @market.id
+      recipients.each do |user|
+        AdminActionMailer.market_deleted(user:, group: current_group, market_title: title,
+                                         actor_name: current_membership.user.name).deliver_later
+      end
+    end
     respond_with @market
   end
 
@@ -137,8 +173,29 @@ class Groups::MarketsController < ApplicationController
     SQL
   end
 
-  def render_not_creator
-    render json:   {error: I18n.t("groups.markets.errors.not_creator")},
+  def editor? = current_membership.admin? || @market.creator_id == current_membership.id
+
+  # Enqueued only after the UPDATE has committed (the request runs outside
+  # any wrapping transaction), so a rolled-back edit never mails anyone.
+  def notify_position_holders_of_edit
+    changes = @market.saved_changes.slice(*NOTIFIED_EDIT_FIELDS)
+    return if changes.empty?
+
+    other_position_holders.each do |user|
+      AdminActionMailer.market_edited(user:, market: @market, changes:,
+                                      actor_name: current_membership.user.name).deliver_later
+    end
+  end
+
+  # Every position holder's user except the actor — the people an edit or
+  # delete must be explained to.
+  def other_position_holders
+    @market.positions.includes(membership: :user).map { |position| position.membership.user }.uniq -
+      [current_membership.user]
+  end
+
+  def render_not_editor
+    render json:   {error: I18n.t("groups.markets.errors.not_editor")},
            status: :forbidden
   end
 

@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe "/groups/:group_id/markets" do
+  include ActiveJob::TestHelper
+
   let(:group) { create :group }
   let(:membership) { create :membership, group: }
   let(:member) { membership.user }
@@ -92,6 +94,50 @@ RSpec.describe "/groups/:group_id/markets" do
     end
   end
 
+  describe "DELETE /:id" do
+    let(:admin_membership) { create :membership, :admin, group: }
+    let(:market) { create :market, group: }
+
+    it "rejects non-admin members" do
+      sign_in member
+      delete "/groups/#{group.to_param}/markets/#{market.id}.json"
+
+      expect(response).to have_http_status(:forbidden)
+      expect(Market.exists?(market.id)).to be(true)
+    end
+
+    it "deletes an unresolved market, cascading positions and mailing the other holders" do
+      holder = create(:position, market:).membership.user
+      create(:position, market:, membership: admin_membership)
+
+      ActionMailer::Base.deliveries.clear
+      sign_in admin_membership.user
+      perform_enqueued_jobs do
+        delete "/groups/#{group.to_param}/markets/#{market.id}.json"
+      end
+
+      expect(response).to have_http_status(:no_content)
+      expect(Market.exists?(market.id)).to be(false)
+      expect(Position.count).to eq(0)
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly(holder.email)
+    end
+
+    it "rejects deleting a market whose money has moved" do
+      yes, no = market.outcomes.to_a
+      create(:position, market:, outcome: yes)
+      create(:position, market:, outcome: no)
+      market.update_column(:locks_at, 1.hour.ago) # rubocop:disable Rails/SkipsModelValidations
+      Markets::Resolver.resolve(market, yes, market.oracle)
+
+      sign_in admin_membership.user
+      delete "/groups/#{group.to_param}/markets/#{market.id}.json"
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("errors", "base")).to be_present
+      expect(Market.exists?(market.id)).to be(true)
+    end
+  end
+
   describe "PATCH /:id" do
     let(:market) { create :market, group: }
 
@@ -121,6 +167,28 @@ RSpec.describe "/groups/:group_id/markets" do
 
       expect(response).to be_successful
       expect(mine.reload.title).to eq("Clarified?")
+    end
+
+    it "lets a group admin edit another member's open market, mailing the other holders" do
+      admin_membership = create(:membership, :admin, group:)
+      market.update_column(:closing_soon_notified_at, 1.hour.ago) # rubocop:disable Rails/SkipsModelValidations
+      holder = create(:position, market:).membership.user
+      create(:position, market:, membership: admin_membership)
+      new_locks_at = 3.days.from_now.change(usec: 0)
+
+      ActionMailer::Base.deliveries.clear
+      sign_in admin_membership.user
+      perform_enqueued_jobs do
+        patch "/groups/#{group.to_param}/markets/#{market.id}.json",
+              params: {market: {title: "Clarified by an admin?", locks_at: new_locks_at.iso8601}}
+      end
+
+      expect(response).to be_successful
+      expect(market.reload.title).to eq("Clarified by an admin?")
+      expect(market.locks_at).to be_within(1.second).of(new_locks_at)
+      expect(market.closing_soon_notified_at).to be_nil
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly(holder.email)
+      expect(ActionMailer::Base.deliveries.first.subject).to include("Clarified by an admin?")
     end
   end
 end

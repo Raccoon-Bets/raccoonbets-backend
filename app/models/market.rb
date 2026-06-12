@@ -6,9 +6,10 @@
 # `locks_at` at read time; no job flips a status. After the event, the market's
 # oracle resolves it to a winning outcome (Phase 4).
 #
-# The creator may edit `title` and `description` while the market is open, and
-# `locks_at` only until the first position is taken. Outcomes are immutable once
-# any position exists.
+# The creator or a group admin may edit `title`, `description`, and `locks_at`
+# while the market is open; position holders are emailed about edits that follow
+# their positions ({AdminActionMailer}). Outcomes are immutable once any
+# position exists.
 #
 # Associations
 # ------------
@@ -61,7 +62,10 @@ class Market < ApplicationRecord
   validate :creator_in_group
   validates :locks_at, presence: true
   validate :locks_at_in_future, if: :locks_at_changed?
-  validate :locks_at_unchangeable_once_positions_exist, on: :update
+
+  # Postponing trading lets the closing-soon notice fire again for the new
+  # deadline.
+  before_save :clear_closing_soon_notification, if: :locks_at_postponed?
 
   # @return [true, false] Whether trading has closed because `locks_at` has
   #   passed while the market is still open (awaiting resolution).
@@ -104,7 +108,12 @@ class Market < ApplicationRecord
     errors.add(:locks_at, :must_be_future) if locks_at && !locks_at.future?
   end
 
-  def locks_at_unchangeable_once_positions_exist
-    errors.add(:locks_at, :unchangeable) if locks_at_changed? && positions.exists?
+  def locks_at_postponed?
+    will_save_change_to_locks_at? && locks_at_in_database.present? && locks_at.present? &&
+      locks_at > locks_at_in_database
+  end
+
+  def clear_closing_soon_notification
+    self.closing_soon_notified_at = nil
   end
 end

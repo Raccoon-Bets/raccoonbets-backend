@@ -124,7 +124,7 @@ en:
         last_admin: A group must keep at least one admin.
     markets:
       errors:
-        not_creator: Only the market’s creator can edit it.
+        not_editor: Only the market’s creator or a group admin can edit it.
         not_open: This market is no longer open.
     positions:
       errors:
@@ -148,6 +148,27 @@ en:
       button: Accept your invitation
       ignore: If you weren’t expecting this invitation, ignore this email.
       text_intro: "%{inviter} invited you to join %{group} on Raccoon Bets. Accept the invitation by visiting:"
+  admin_action_mailer:
+    shared:
+      view_button: "View it"
+      mandatory: "You're getting this because the change affects your position; these notices can't be turned off."
+    market_edited:
+      subject: "Market changed: %{title}"
+      heading: "A market you have a position on was changed"
+      body: "%{actor} edited “%{title}” in %{group}. What changed:"
+      blank: "(blank)"
+      fields:
+        title: "Title"
+        description: "Description"
+        locks_at: "Closing time"
+    market_deleted:
+      subject: "Market deleted: %{title}"
+      heading: "A market you had a position on was deleted"
+      body: "%{actor} deleted “%{title}” in %{group}. Your position was removed with it — no money had moved, so there’s nothing to settle."
+    position_cancelled:
+      subject: "Your position was cancelled: %{title}"
+      heading: "An admin cancelled your position"
+      body: "%{actor} cancelled your %{amount} position on “%{title}” in %{group}. You can take a new position while the market is open."
   notification_mailer:
     shared:
       view_button: "View it"

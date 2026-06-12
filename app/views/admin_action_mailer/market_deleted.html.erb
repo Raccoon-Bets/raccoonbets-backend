@@ -1,0 +1,11 @@
+<h1><%= t("admin_action_mailer.market_deleted.heading") %></h1>
+
+<p><%= t("admin_action_mailer.market_deleted.body", actor: @actor_name, title: @market_title, group: @group.name) %></p>
+
+<p>
+  <a href="<%= @link %>" style="display:inline-block;padding:10px 20px;background:#0066cc;color:#fff;text-decoration:none;border-radius:4px;"><%= t("admin_action_mailer.shared.view_button") %></a>
+</p>
+
+<p><%= @link %></p>
+
+<p><%= t("admin_action_mailer.shared.mandatory") %></p>

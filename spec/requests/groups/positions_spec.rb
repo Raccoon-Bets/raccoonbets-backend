@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe "/groups/:group_id/markets/:market_id/position" do
+  include ActiveJob::TestHelper
+
   let(:group) { create :group }
   let(:membership) { create :membership, group: }
   let(:member) { membership.user }
@@ -60,6 +62,41 @@ RSpec.describe "/groups/:group_id/markets/:market_id/position" do
       sign_in member
 
       delete path
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Position.exists?(position.id)).to be(true)
+    end
+  end
+
+  describe "DELETE /groups/:group_id/markets/:market_id/positions/:id (admin)" do
+    let(:admin_membership) { create :membership, :admin, group: }
+    let(:position) { create :position, market: }
+    let(:admin_path) { "/groups/#{group.to_param}/markets/#{market.id}/positions/#{position.id}.json" }
+
+    it "lets an admin cancel another member's position, emailing the owner" do
+      ActionMailer::Base.deliveries.clear
+      sign_in admin_membership.user
+      perform_enqueued_jobs { delete admin_path }
+
+      expect(response).to have_http_status(:no_content)
+      expect(Position.exists?(position.id)).to be(false)
+      expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly(position.membership.user.email)
+      expect(ActionMailer::Base.deliveries.first.subject).to include(market.title)
+    end
+
+    it "forbids non-admin members" do
+      sign_in member
+      delete admin_path
+
+      expect(response).to have_http_status(:forbidden)
+      expect(Position.exists?(position.id)).to be(true)
+    end
+
+    it "refuses once the market is locked" do
+      position
+      market.update_column(:locks_at, 1.hour.ago) # rubocop:disable Rails/SkipsModelValidations
+      sign_in admin_membership.user
+      delete admin_path
+
       expect(response).to have_http_status(:unprocessable_content)
       expect(Position.exists?(position.id)).to be(true)
     end

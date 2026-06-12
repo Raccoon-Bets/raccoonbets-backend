@@ -1,0 +1,11 @@
+<h1><%= t("admin_action_mailer.position_cancelled.heading") %></h1>
+
+<p><%= t("admin_action_mailer.position_cancelled.body", actor: @actor_name, amount: @amount, title: @market.title, group: @market.group.name) %></p>
+
+<p>
+  <a href="<%= @link %>" style="display:inline-block;padding:10px 20px;background:#0066cc;color:#fff;text-decoration:none;border-radius:4px;"><%= t("admin_action_mailer.shared.view_button") %></a>
+</p>
+
+<p><%= @link %></p>
+
+<p><%= t("admin_action_mailer.shared.mandatory") %></p>

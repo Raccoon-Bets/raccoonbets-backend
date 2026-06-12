@@ -20,6 +20,7 @@
 #
 # * `market_created`, `market_updated` — `{type:, market_id:}` (`market_updated`
 #   also fires when a position changes the market's pools)
+# * `market_deleted` — `{type:, market_id:}`
 # * `market_resolved`, `market_voided`, `market_corrected` — `{type:, market_id:}`
 # * `settlement_recorded`, `settlement_voided` — `{type:}`
 # * `member_joined` — `{type:}`

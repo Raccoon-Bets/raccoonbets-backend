@@ -44,13 +44,20 @@ RSpec.describe Market do
       expect(market.update(locks_at: 2.days.from_now)).to be(true)
     end
 
-    it "cannot change once a position exists" do
+    it "clears closing_soon_notified_at when locks_at is postponed" do
       market = create(:market)
-      create(:position, market:)
+      market.update_column(:closing_soon_notified_at, Time.current) # rubocop:disable Rails/SkipsModelValidations
 
-      market.locks_at = 2.days.from_now
-      expect(market).not_to be_valid
-      expect(market.errors[:locks_at]).to include("cannot be changed")
+      market.update!(locks_at: 2.days.from_now)
+      expect(market.closing_soon_notified_at).to be_nil
+    end
+
+    it "keeps closing_soon_notified_at when locks_at moves earlier" do
+      market = create(:market, locks_at: 2.days.from_now)
+      market.update_column(:closing_soon_notified_at, Time.current) # rubocop:disable Rails/SkipsModelValidations
+
+      market.update!(locks_at: 1.day.from_now)
+      expect(market.closing_soon_notified_at).to be_present
     end
   end
 end

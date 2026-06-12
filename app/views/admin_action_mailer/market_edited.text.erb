@@ -1,0 +1,11 @@
+<%= t("admin_action_mailer.market_edited.heading") %>
+
+<%= t("admin_action_mailer.market_edited.body", actor: @actor_name, title: @market.title, group: @market.group.name) %>
+
+<% @changes.each do |field, (before, after)| %>
+* <%= t("admin_action_mailer.market_edited.fields.#{field}") %>: <%= change_value(before) %> → <%= change_value(after) %>
+<% end %>
+
+<%= @link %>
+
+<%= t("admin_action_mailer.shared.mandatory") %>

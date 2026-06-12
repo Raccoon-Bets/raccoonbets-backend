@@ -44,8 +44,9 @@ Rails.application.routes.draw do
       post :approve, on: :member
     end
     resources :invitations, only: %i[index create destroy]
-    resources :markets, only: %i[index create show update] do
+    resources :markets, only: %i[index create show update destroy] do
       resource :position, only: %i[update destroy]
+      resources :positions, only: :destroy, controller: "admin_positions", as: :admin_positions
       resource :resolution, only: %i[create update destroy]
     end
     get "balances" => "balances#index"
