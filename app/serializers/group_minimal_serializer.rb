@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# Minimal Group preview for authenticated non-members (join page): no
-# settings, just enough to decide whether to request to join. Pass a
+# Minimal Group preview for non-members and logged-out visitors (join page):
+# no settings, just enough to decide whether to request to join. Pass a
 # `:join_requested` param to indicate the viewer's pending join request.
 
 class GroupMinimalSerializer < ApplicationSerializer

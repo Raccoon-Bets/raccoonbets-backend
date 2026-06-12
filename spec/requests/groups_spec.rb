@@ -71,9 +71,23 @@ RSpec.describe "/groups" do
   end
 
   describe "GET /:group_id" do
-    it "requires a logged-in user" do
+    it "returns only a minimal preview to logged-out visitors" do
+      admin # ensure the group has a member
+
       get "/groups/#{group.to_param}.json"
-      expect(response).to have_http_status(:unauthorized)
+
+      expect(response).to be_successful
+      expect(response.body).to match_json(
+                                 name:           String,
+                                 subdomain:      "trash-pandas",
+                                 member_count:   1,
+                                 join_requested: false
+                               )
+    end
+
+    it "returns 404 to logged-out visitors for unknown groups" do
+      get "/groups/never-heard-of-it.json"
+      expect(response).to have_http_status(:not_found)
     end
 
     it "returns the full group to active members" do

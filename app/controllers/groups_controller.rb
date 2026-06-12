@@ -3,13 +3,13 @@
 # RESTful controller for creating, listing, and managing {Group}s.
 #
 # Members see the full group representation (settings plus their own
-# membership); other authenticated users see a minimal preview suitable for a
-# join page. Suspended or unknown groups render 404.
+# membership); everyone else — authenticated or not — sees a minimal preview
+# suitable for a join page. Suspended or unknown groups render 404.
 
 class GroupsController < ApplicationController
   include GroupScoping
 
-  before_action :authenticate_user!
+  before_action :authenticate_user!, except: :show
   before_action :require_group_admin!, only: :update
 
   # Lists the groups the current user is an active member of.
@@ -25,9 +25,9 @@ class GroupsController < ApplicationController
   end
 
   # Displays a group. Active members receive the full representation
-  # (settings and their own membership); other authenticated users receive a
-  # minimal preview (name, member count, whether they have a pending join
-  # request).
+  # (settings and their own membership); everyone else — including logged-out
+  # visitors — receives a minimal preview (name, member count, whether the
+  # viewer has a pending join request).
   #
   # Routes
   # ------
@@ -44,7 +44,8 @@ class GroupsController < ApplicationController
   def show
     @group      = current_group
     @membership = current_membership
-    @join_requested = @membership.nil? && current_group.memberships.requested.exists?(user: current_user)
+    @join_requested = current_user.present? && @membership.nil? &&
+                      current_group.memberships.requested.exists?(user: current_user)
     respond_with @group
   end
 
