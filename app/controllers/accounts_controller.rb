@@ -19,7 +19,7 @@ class AccountsController < ApplicationController
       current_user.notification_preferences = NotificationPreferences.sanitize(raw_prefs.to_unsafe_h)
     end
 
-    current_user.push_prompt_dismissed_at = Time.current if dismiss_push_prompt?
+    current_user.push_prompt_dismissed_at ||= Time.current if dismiss_push_prompt?
 
     if current_user.save
       render json: account_json(current_user)

@@ -50,5 +50,14 @@ RSpec.describe "Accounts", type: :request do
 
       expect(user.reload.push_prompt_dismissed_at).to be_nil
     end
+
+    it "does not overwrite an existing dismissal timestamp" do
+      sign_in user
+      user.update!(push_prompt_dismissed_at: Time.utc(2026, 1, 2, 3, 4, 5))
+
+      expect do
+        patch "/account", params: {user: {dismiss_push_prompt: true}}
+      end.not_to(change { user.reload.push_prompt_dismissed_at })
+    end
   end
 end
