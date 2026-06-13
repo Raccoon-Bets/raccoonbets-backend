@@ -11,6 +11,7 @@ en:
       ledger_entry: ledger entry
       settlement: settlement
       market_event: market event
+      comment: comment
     attributes:
       user:
         name: name
@@ -67,6 +68,9 @@ en:
         actor: actor
         outcome: outcome
         note: note
+      comment:
+        author: author
+        body: comment
     errors:
       models:
         market:
@@ -87,6 +91,10 @@ en:
             outcome:
               wrong_market: must be one of this market’s outcomes
             membership:
+              not_a_member: must be an active member of this group
+        comment:
+          attributes:
+            author:
               not_a_member: must be an active member of this group
         settlement:
           attributes:
@@ -129,6 +137,9 @@ en:
     positions:
       errors:
         trading_closed: Trading is closed for this market.
+    comments:
+      errors:
+        not_deletable: You can only delete your own comments.
     settlements:
       errors:
         not_a_party: You can only record or void settlements you are a party to.
@@ -196,6 +207,10 @@ en:
       subject: "Closing soon: %{title}"
       heading: "A market is about to close"
       body: "Trading on %{title} closes soon — last chance to get in."
+    market_commented:
+      subject: "New comment on %{title}"
+      heading: "A market you’re following has a new comment"
+      body: "%{author} commented on %{title}."
   rodauth_mailer:
     shared:
       paste_url: "Or copy and paste this URL into your browser:"

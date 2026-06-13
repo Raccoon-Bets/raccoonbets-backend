@@ -42,4 +42,15 @@ class NotificationMailer < ApplicationMailer
     @link = Notifications::Links.group_url(market.group, "/markets/#{market.id}")
     mail_localized user, "notification_mailer.market_closing_soon.subject", title: market.title
   end
+
+  # @param user [User] the recipient (market creator or a prior commenter).
+  # @param comment [Comment] the new comment.
+  def market_commented(user:, comment:)
+    @user = user
+    @comment = comment
+    @market = comment.market
+    @author_name = comment.author.user.name
+    @link = Notifications::Links.group_url(@market.group, "/markets/#{@market.id}")
+    mail_localized user, "notification_mailer.market_commented.subject", title: @market.title
+  end
 end

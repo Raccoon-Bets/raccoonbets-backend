@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_11_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -53,6 +53,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_070000) do
 
   create_table "account_webauthn_user_ids", force: :cascade do |t|
     t.string "webauthn_id", null: false
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.bigint "author_membership_id", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.bigint "market_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_membership_id"], name: "index_comments_on_author_membership_id"
+    t.index ["market_id", "created_at"], name: "index_comments_on_market_id_and_created_at"
   end
 
   create_table "groups", force: :cascade do |t|
@@ -334,6 +344,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_070000) do
   add_foreign_key "account_verification_keys", "users", column: "id", on_delete: :cascade
   add_foreign_key "account_webauthn_keys", "users", column: "account_id", on_delete: :cascade
   add_foreign_key "account_webauthn_user_ids", "users", column: "id", on_delete: :cascade
+  add_foreign_key "comments", "markets"
+  add_foreign_key "comments", "memberships", column: "author_membership_id"
   add_foreign_key "invitations", "groups"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "ledger_entries", "groups"

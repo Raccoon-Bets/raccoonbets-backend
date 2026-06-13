@@ -3,7 +3,7 @@
 # A plain value object over a User's `notification_preferences` jsonb. Every
 # event x channel defaults to ON; only explicit `false` overrides are stored.
 class NotificationPreferences
-  EVENTS   = %w[market_resolved market_created settlement market_closing_soon].freeze
+  EVENTS   = %w[market_resolved market_created settlement market_closing_soon market_commented].freeze
   CHANNELS = %w[email push].freeze
 
   def initialize(raw)

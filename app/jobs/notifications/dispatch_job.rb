@@ -23,7 +23,11 @@ module Notifications
     private
 
     def load_record(event, record_id)
-      klass = (event == "settlement") ? Settlement : Market
+      klass = case event
+                when "settlement"       then Settlement
+                when "market_commented" then Comment
+                else Market
+              end
       klass.find_by(id: record_id)
     end
 
@@ -31,11 +35,24 @@ module Notifications
       case event
         when "market_resolved", "market_closing_soon", "market_created"
           market_recipients(event, record)
+        when "market_commented"
+          comment_recipients(record)
         when "settlement"
           [record.payer.user, record.payee.user].uniq
         else
           []
       end
+    end
+
+    # The market's creator plus everyone who has commented on it, excluding the
+    # member who just commented, scoped to active members (someone who has left
+    # the group is not notified).
+    def comment_recipients(comment)
+      market         = comment.market
+      author_user_id = comment.author.user_id
+      commenter_ids  = market.comments.joins(:author).pluck("memberships.user_id")
+      candidate_ids  = (commenter_ids + [market.creator.user_id]).uniq - [author_user_id]
+      active_member_users(market.group).where(id: candidate_ids)
     end
 
     def market_recipients(event, market)
@@ -59,6 +76,7 @@ module Notifications
         when "market_resolved"     then NotificationMailer.market_resolved(user:, market: record, kind:).deliver_later
         when "market_created"      then NotificationMailer.market_created(user:, market: record).deliver_later
         when "market_closing_soon" then NotificationMailer.market_closing_soon(user:, market: record).deliver_later
+        when "market_commented"    then NotificationMailer.market_commented(user:, comment: record).deliver_later
         when "settlement"          then NotificationMailer.settlement(user:, settlement: record, kind:).deliver_later
       end
     end
@@ -76,6 +94,9 @@ module Notifications
           {title: "New market", body: record.title, url: Links.group_url(record.group, "/markets/#{record.id}")}
         when "market_closing_soon"
           {title: "Closing soon", body: record.title, url: Links.group_url(record.group, "/markets/#{record.id}")}
+        when "market_commented"
+          {title: "New comment", body: record.market.title,
+           url: Links.group_url(record.market.group, "/markets/#{record.market.id}")}
         when "settlement"
           {title: "Settle-up update", body: record.group.name, url: Links.group_url(record.group, "/settle-up")}
       end

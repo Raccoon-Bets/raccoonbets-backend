@@ -82,7 +82,8 @@ class Groups::ResolutionsController < ApplicationController
   def render_market_detail
     @market = current_group.markets.
         includes(:outcomes, positions: {membership: :user}, creator: :user, oracle: :user,
-                 resolved_by: :user, market_events: [:outcome, {actor: :user}]).
+                 resolved_by: :user, market_events: [:outcome, {actor: :user}],
+                 comments: {author: :user}).
         find(@market.id)
     load_trading_context [@market]
     load_resolution_context @market

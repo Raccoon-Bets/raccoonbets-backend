@@ -15,6 +15,7 @@
 # | `positions`       | The member's {Position}s.                                   |
 # | `created_markets` | The {Market}s the member created.                            |
 # | `oracle_markets`  | The {Market}s the member is the oracle for.                  |
+# | `comments`        | The {Comment}s the member has written.                       |
 #
 # Properties
 # ----------
@@ -41,6 +42,8 @@ class Membership < ApplicationRecord
   has_many :ledger_entries, dependent: :restrict_with_error
   has_many :market_events, foreign_key: :actor_membership_id,
                            inverse_of: :actor, dependent: :restrict_with_error
+  has_many :comments, foreign_key: :author_membership_id,
+                      inverse_of: :author, dependent: :restrict_with_error
   has_many :settlements_as_payer, class_name: "Settlement", foreign_key: :payer_membership_id,
                                    inverse_of: :payer, dependent: :restrict_with_error
   has_many :settlements_as_payee, class_name: "Settlement", foreign_key: :payee_membership_id,
