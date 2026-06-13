@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 # Full representation of a {Market}: everything in {MarketSerializer} plus the
-# description, every position with the holder's name, who resolved it, the
-# per-member payout summary, and the resolution audit trail.
+# description, every position with the holder's name, the discussion comments
+# with their authors, who resolved it, the per-member payout summary, and the
+# resolution audit trail.
 #
 # Params
 # ------
@@ -15,6 +16,8 @@ class MarketDetailSerializer < MarketSerializer
   attributes :description
 
   many :positions, resource: PositionSerializer
+
+  many :comments, resource: CommentSerializer
 
   attribute :resolved_by do |market|
     market.resolved_by && membership_ref(market.resolved_by)

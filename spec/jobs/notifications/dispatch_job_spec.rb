@@ -50,6 +50,30 @@ RSpec.describe Notifications::DispatchJob do
     expect(enqueued_mail_for?(creator.user, :market_closing_soon)).to be(false)
   end
 
+  it "notifies the creator and prior commenters except the new commenter on market_commented" do
+    prior_commenter = create(:membership, group:)
+    create(:comment, market:, author: prior_commenter)
+    new_commenter = create(:membership, group:)
+    comment = create(:comment, market:, author: new_commenter)
+
+    described_class.perform_now(event: "market_commented", record_id: comment.id)
+
+    expect(enqueued_mail_for?(creator.user, :market_commented)).to be(true)
+    expect(enqueued_mail_for?(prior_commenter.user, :market_commented)).to be(true)
+    expect(enqueued_mail_for?(new_commenter.user, :market_commented)).to be(false)
+  end
+
+  it "respects a disabled channel on market_commented" do
+    creator.user.update!(notification_preferences: {"market_commented" => {"email" => false}})
+    create(:push_subscription, user: creator.user)
+    comment = create(:comment, market:, author: create(:membership, group:))
+
+    described_class.perform_now(event: "market_commented", record_id: comment.id)
+
+    expect(enqueued_mail_for?(creator.user, :market_commented)).to be(false)
+    expect(enqueued_jobs.select { |j| j[:job] == WebPush::DeliverJob }).not_to be_empty
+  end
+
   it "no-ops when the record is gone" do
     expect do
       described_class.perform_now(event: "market_resolved", record_id: -1, kind: "resolved")

@@ -22,6 +22,15 @@ RSpec.describe NotificationMailer do
     expect(mail.body.encoded).to include(market.title)
   end
 
+  it "renders market_commented with the author's name and a link to the market" do
+    comment = create(:comment, market:, body: "Looks likely.")
+    mail = described_class.market_commented(user:, comment:)
+    expect(mail.to).to eq([user.email])
+    expect(mail.body.encoded).to include("/markets/#{market.id}")
+    expect(mail.body.encoded).to include(comment.author.user.name)
+    expect(mail.body.encoded).not_to include("translation missing")
+  end
+
   it "renders settlement with the localized kind" do
     settlement = create(:settlement, group:)
     mail = described_class.settlement(user:, settlement:, kind: "recorded")

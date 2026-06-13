@@ -21,6 +21,7 @@
 # | `oracle`          | The {Membership} designated to resolve the market.          |
 # | `outcomes`        | The {Outcome}s members can trade on, ordered by `position`. |
 # | `positions`       | The {Position}s taken on the market.                         |
+# | `comments`        | The members' {Comment}s on the market, oldest first.        |
 # | `winning_outcome` | The {Outcome} the market resolved to, if resolved.          |
 # | `resolved_by`     | The {Membership} that resolved the market, if resolved.     |
 #
@@ -48,6 +49,7 @@ class Market < ApplicationRecord
   # positions are removed before outcomes, which they hold foreign keys to.
   has_many :ledger_entries, dependent: :restrict_with_error
   has_many :market_events, -> { order(:created_at, :id) }, dependent: :delete_all, inverse_of: :market
+  has_many :comments, -> { order(:created_at, :id) }, dependent: :delete_all, inverse_of: :market
   has_many :positions, dependent: :destroy
   has_many :outcomes, -> { order(:position) }, dependent: :destroy, inverse_of: :market
 

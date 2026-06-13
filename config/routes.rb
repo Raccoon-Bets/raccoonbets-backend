@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       resource :position, only: %i[update destroy]
       resources :positions, only: :destroy, controller: "admin_positions", as: :admin_positions
       resource :resolution, only: %i[create update destroy]
+      resources :comments, only: %i[create destroy]
     end
     get "balances" => "balances#index"
     get "settle_up" => "settle_up#show"
