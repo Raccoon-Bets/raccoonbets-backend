@@ -19,6 +19,8 @@ class AccountsController < ApplicationController
       current_user.notification_preferences = NotificationPreferences.sanitize(raw_prefs.to_unsafe_h)
     end
 
+    current_user.push_prompt_dismissed_at = Time.current if dismiss_push_prompt?
+
     if current_user.save
       render json: account_json(current_user)
     else
@@ -39,6 +41,10 @@ class AccountsController < ApplicationController
     user_params.present? && SCALAR_ACCOUNT_KEYS.any? { |k| user_params.key?(k) }
   end
 
+  def dismiss_push_prompt?
+    ActiveModel::Type::Boolean.new.cast(params.dig(:user, :dismiss_push_prompt))
+  end
+
   def account_params
     params.expect(user: SCALAR_ACCOUNT_KEYS)
   end
@@ -55,6 +61,7 @@ class AccountsController < ApplicationController
           {id: k.webauthn_id, label: k.label, last_used_at: k.last_use}
         end,
         notification_preferences: user.notification_preferences_object.as_json,
+        push_prompt_dismissed_at: user.push_prompt_dismissed_at&.iso8601(3),
         vapid_public_key:         Rails.application.credentials.dig(:vapid, :public_key)
     }
   end
