@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_13_070447) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -331,6 +331,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
     t.jsonb "notification_preferences", default: {}, null: false
     t.string "password_hash"
     t.string "paypal_handle"
+    t.datetime "push_prompt_dismissed_at"
     t.integer "status_id", default: 1, null: false
     t.boolean "superadmin", default: false, null: false
     t.datetime "updated_at", null: false
