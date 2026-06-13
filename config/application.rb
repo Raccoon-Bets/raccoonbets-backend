@@ -92,5 +92,13 @@ module Raccoonbets
                           same_site: Rails.env.production? ? :none : :lax,
                           secure:    Rails.env.production?,
                           httponly:  true
+    # When OmniAuth fails (e.g. a lost `state` cookie on a privacy-hardened
+    # mobile browser), Rodauth sets a redirect-error flash before honoring our
+    # omniauth_failure_redirect. api_only strips ActionDispatch::Flash, so on
+    # the cookie-session /auth/* path that flash call raised NoMethodError and
+    # turned every OAuth failure into a 500 instead of a clean redirect back to
+    # the SPA. The flash itself is inert (the SPA never reads it); the
+    # middleware just has to be present. It sits below the session it writes to.
+    config.middleware.use ActionDispatch::Flash
   end
 end
