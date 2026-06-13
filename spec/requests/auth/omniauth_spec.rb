@@ -78,6 +78,23 @@ RSpec.describe "OmniAuth social login" do
     end
   end
 
+  describe "a failed provider callback" do
+    # A privacy-hardened mobile browser can drop the cross-site session cookie
+    # carrying the OAuth `state`, so the callback fails its state check. OmniAuth's
+    # failure handler sets a redirect flash before honoring our failure redirect;
+    # without ActionDispatch::Flash in this api_only stack that flash raised and
+    # turned the failure into a 500 (RACCOONBETS-BACKEND-1) instead of returning
+    # the visitor to the SPA with an error.
+    it "redirects to the SPA callback with an error rather than raising" do
+      OmniAuth.config.mock_auth[:google] = :invalid_credentials
+
+      sign_in_with_google
+
+      expect(response).to have_http_status(:redirect)
+      expect(response.location).to start_with("#{frontend}/oauth/callback#error=failed")
+    end
+  end
+
   describe "matching an existing account by verified email" do
     it "links to a verified password account without creating a new user" do
       user = create :user, email: "ada@example.com"
