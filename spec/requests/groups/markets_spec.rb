@@ -41,23 +41,25 @@ RSpec.describe "/groups/:group_id/markets" do
 
       expect(response).to be_successful
       expect(response.body).to match_json([{
-                                              id:                 market.id,
-                                              title:              String,
-                                              status:             "open",
-                                              locks_at:           String,
-                                              created_at:         String,
-                                              winning_outcome_id: nil,
-                                              resolved_at:        nil,
-                                              locked:             false,
-                                              currency:           "USD",
-                                              creator:            {id: Integer, name: String},
-                                              oracle:             {id: Integer, name: String},
-                                              total_pool_cents:   350,
-                                              outcomes:           [
+                                              id:                      market.id,
+                                              title:                   String,
+                                              status:                  "open",
+                                              kind:                    "scheduled",
+                                              locks_at:                String,
+                                              created_at:              String,
+                                              winning_outcome_id:      nil,
+                                              resolved_at:             nil,
+                                              resolution_effective_at: nil,
+                                              locked:                  false,
+                                              currency:                "USD",
+                                              creator:                 {id: Integer, name: String},
+                                              oracle:                  {id: Integer, name: String},
+                                              total_pool_cents:        350,
+                                              outcomes:                [
                                                   {id: yes.id, name: "YES", position: 0, pool_cents: 300, position_count: 2},
                                                   {id: no.id, name: "NO", position: 1, pool_cents: 50, position_count: 1}
                                               ],
-                                              my_position:        {id: my_position.id, outcome_id: no.id, amount_cents: 50}
+                                              my_position:             {id: my_position.id, outcome_id: no.id, amount_cents: 50}
                                           }])
     end
   end

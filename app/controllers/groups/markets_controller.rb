@@ -69,7 +69,7 @@ class Groups::MarketsController < ApplicationController
   #
   # |           |                                                                                                              |
   # |:----------|:-----------------------------------------------------------------------------------------------------------|
-  # | `:market` | Parameterized Market attributes (`title`, `description`, `locks_at`, optional `oracle_id`) plus `outcomes`, an array of at least two outcome names. |
+  # | `:market` | Parameterized Market attributes (`title`, `description`, optional `oracle_id` and `kind`; `locks_at` is required for a `scheduled` market and omitted for an `open_ended` one) plus `outcomes`, an array of at least two outcome names. |
 
   def create
     @market         = current_group.markets.new(market_params)
@@ -152,7 +152,7 @@ class Groups::MarketsController < ApplicationController
 
   def market_params
     case action_name
-      when "create" then params.expect(market: %i[title description locks_at oracle_id])
+      when "create" then params.expect(market: %i[title description locks_at oracle_id kind])
       else params.expect(market: %i[title description locks_at])
     end
   end

@@ -12,6 +12,12 @@ FactoryBot.define do
       outcome_names { %w[YES NO] }
     end
 
+    # An open-ended market has no scheduled close; it trades until resolved.
+    trait :open_ended do
+      kind { :open_ended }
+      locks_at { nil }
+    end
+
     after(:build) do |market, context|
       next if market.outcomes.any?
 

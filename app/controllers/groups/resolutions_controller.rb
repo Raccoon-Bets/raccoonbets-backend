@@ -29,12 +29,13 @@ class Groups::ResolutionsController < ApplicationController
   # Body Parameters
   # ---------------
   #
-  # |               |                                 |
-  # |:--------------|:----------------------------------|
-  # | `:outcome_id` | The ID of the winning outcome.  |
+  # |                 |                                                                                  |
+  # |:----------------|:----------------------------------------------------------------------------------|
+  # | `:outcome_id`   | The ID of the winning outcome.                                                   |
+  # | `:effective_at` | Optional. When the outcome became known, for an early resolution: the pool is settled as it stood then, excluding later bets. Required to early-resolve a scheduled market; defaults to now for an open-ended one. |
 
   def create
-    Markets::Resolver.resolve @market, outcome, current_membership
+    Markets::Resolver.resolve(@market, outcome, current_membership, effective_at:)
     render_market_detail
   end
 
@@ -78,6 +79,20 @@ class Groups::ResolutionsController < ApplicationController
   end
 
   def outcome = @market.outcomes.find(params.expect(:outcome_id))
+
+  # Parses the optional early-resolution cutoff, mapping a malformed timestamp
+  # to the same 422 the resolver's own guards render.
+  def effective_at
+    return if params[:effective_at].blank?
+
+    Time.zone.parse(params[:effective_at].to_s) or raise_effective_at_invalid
+  rescue ArgumentError
+    raise_effective_at_invalid
+  end
+
+  def raise_effective_at_invalid
+    raise Markets::Resolver::Error, I18n.t("markets.resolver.errors.effective_at_invalid")
+  end
 
   def render_market_detail
     @market = current_group.markets.

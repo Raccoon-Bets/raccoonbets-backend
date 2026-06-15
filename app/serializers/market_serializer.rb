@@ -14,7 +14,8 @@
 # | `:currency` | The group's ISO 4217 currency code.                                  |
 
 class MarketSerializer < ApplicationSerializer
-  attributes :id, :title, :status, :locks_at, :created_at, :winning_outcome_id, :resolved_at
+  attributes :id, :title, :status, :kind, :locks_at, :created_at, :winning_outcome_id, :resolved_at,
+             :resolution_effective_at
 
   attribute :locked, &:locked?
 

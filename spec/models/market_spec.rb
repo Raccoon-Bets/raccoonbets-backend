@@ -32,6 +32,27 @@ RSpec.describe Market do
     end
   end
 
+  describe "kind" do
+    it "lets an open-ended market omit locks_at and trade until resolved" do
+      market = create(:market, :open_ended)
+      expect(market).to be_valid
+      expect(market.open_for_trading?).to be(true)
+      expect(market.locked?).to be(false)
+    end
+
+    it "rejects a locks_at on an open-ended market" do
+      market = build(:market, :open_ended, locks_at: 1.day.from_now)
+      expect(market).not_to be_valid
+      expect(market.errors.added?(:locks_at, :not_for_open_ended)).to be(true)
+    end
+
+    it "requires locks_at on a scheduled market" do
+      market = build(:market, locks_at: nil)
+      expect(market).not_to be_valid
+      expect(market.errors.added?(:locks_at, :blank)).to be(true)
+    end
+  end
+
   describe "locks_at" do
     it "must be in the future when set" do
       market = build(:market, locks_at: 1.minute.ago)

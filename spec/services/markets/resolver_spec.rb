@@ -78,6 +78,96 @@ RSpec.describe Markets::Resolver do
     end
   end
 
+  describe ".resolve early (effective-as-of cutoff)" do
+    # Markets and positions are backdated through real saves so the
+    # PositionChange history carries truthful timestamps for the snapshot.
+    it "resolves an open-ended market while it is still open, settling the live pool" do
+      market = travel_to(3.hours.ago) { create(:market, :open_ended, group:) }
+      winner = create(:position, market:, outcome: market.outcomes.first, amount_cents: 100)
+      loser  = create(:position, market:, outcome: market.outcomes.second, amount_cents: 100)
+
+      expect(market).to be_open
+      described_class.resolve market, market.outcomes.first, admin
+
+      expect(market.reload).to be_resolved
+      expect(market.resolution_effective_at).to be_present
+      entries = market.ledger_entries.index_by(&:membership_id)
+      expect(entries[winner.membership_id]).to have_attributes(entry_type: "win", amount_cents: 100)
+      expect(entries[loser.membership_id]).to have_attributes(entry_type: "loss", amount_cents: -100)
+      expect(group).to have_zero_sum_ledger
+    end
+
+    it "excludes a bet placed after the cutoff, so it is never charged" do
+      market = travel_to(3.hours.ago) { create(:market, :open_ended, group:) }
+      winner = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.first, amount_cents: 100) }
+      loser  = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 200) }
+      late   = travel_to(30.minutes.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 1000) }
+
+      described_class.resolve market, market.outcomes.first, admin, effective_at: 1.hour.ago
+
+      entries = market.ledger_entries.index_by(&:membership_id)
+      expect(entries[late.membership_id]).to be_nil
+      expect(entries[winner.membership_id]).to have_attributes(entry_type: "win", amount_cents: 200)
+      expect(entries[loser.membership_id]).to have_attributes(entry_type: "loss", amount_cents: -200)
+      expect(group).to have_zero_sum_ledger
+    end
+
+    it "settles a position at its amount as of the cutoff, ignoring a later reduction" do
+      market = travel_to(3.hours.ago) { create(:market, :open_ended, group:) }
+      winner = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.first, amount_cents: 100) }
+      loser  = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 300) }
+      travel_to(30.minutes.ago) { loser.update! amount_cents: 50 }
+
+      described_class.resolve market, market.outcomes.first, admin, effective_at: 1.hour.ago
+
+      entries = market.ledger_entries.index_by(&:membership_id)
+      expect(entries[loser.membership_id]).to have_attributes(entry_type: "loss", amount_cents: -300)
+      expect(entries[winner.membership_id]).to have_attributes(entry_type: "win", amount_cents: 300)
+      expect(group).to have_zero_sum_ledger
+    end
+
+    it "lets a scheduled market be resolved early, the live 'who dies first' case" do
+      market = travel_to(3.hours.ago) { create(:market, group:) }
+      winner = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.first, amount_cents: 100) }
+      travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 100) }
+      late = travel_to(30.minutes.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 400) }
+
+      expect(market).to be_open
+      expect(market.locked?).to be(false)
+      described_class.resolve market, market.outcomes.first, admin, effective_at: 1.hour.ago
+
+      expect(market.reload).to be_resolved
+      entries = market.ledger_entries.index_by(&:membership_id)
+      expect(entries[late.membership_id]).to be_nil
+      expect(entries[winner.membership_id]).to have_attributes(entry_type: "win", amount_cents: 100)
+      expect(group).to have_zero_sum_ledger
+    end
+
+    it "reuses the stored cutoff when the resolution is later corrected" do
+      market = travel_to(3.hours.ago) { create(:market, :open_ended, group:) }
+      a = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.first, amount_cents: 100) }
+      b = travel_to(2.hours.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 100) }
+      late = travel_to(30.minutes.ago) { create(:position, market:, outcome: market.outcomes.second, amount_cents: 500) }
+      described_class.resolve market, market.outcomes.first, admin, effective_at: 1.hour.ago
+
+      described_class.correct market, market.outcomes.second, admin
+
+      nets = market.ledger_entries.group(:membership_id).sum(:amount_cents).reject { |_, cents| cents.zero? }
+      expect(nets).not_to have_key(late.membership_id)
+      expect(nets[a.membership_id]).to eq(-100)
+      expect(nets[b.membership_id]).to eq(100)
+      expect(group).to have_zero_sum_ledger
+    end
+
+    it "rejects a cutoff outside the market's lifetime" do
+      market = create(:market, :open_ended, group:)
+
+      expect { described_class.resolve market, market.outcomes.first, admin, effective_at: 1.hour.from_now }.
+          to raise_error(described_class::Error, /between when the market opened and now/)
+      expect(market.reload).to be_open
+    end
+  end
+
   describe ".void" do
     it "voids an open market without writing any entries" do
       create(:position, market:, outcome: yes, amount_cents: 100)

@@ -33,6 +33,12 @@ class Position < ApplicationRecord
   # directly; group deletion removes the entries first.
   has_many :ledger_entries, dependent: :restrict_with_error
 
+  # Append-only history (in the same transaction as the position) so a market
+  # can be resolved against an effective-as-of cutoff. Skipped on cascade
+  # deletes, which take the whole market's history with them.
+  after_destroy :record_cancellation, unless: :destroyed_by_association
+  after_save :record_change, unless: :destroyed_by_association
+
   # Realtime: any committed position change moves the market's pools. Skipped
   # when the positions are only disappearing as part of a market/group cascade
   # delete.
@@ -65,6 +71,16 @@ class Position < ApplicationRecord
   def broadcast_change
     MarketChannel.broadcast_position_changed market
     GroupChannel.broadcast_event market.group, :market_updated, market_id: market_id
+  end
+
+  def record_change
+    return unless saved_change_to_outcome_id? || saved_change_to_amount_cents?
+
+    PositionChange.create! market_id:, membership_id:, outcome_id:, amount_cents:
+  end
+
+  def record_cancellation
+    PositionChange.create! market_id:, membership_id:
   end
 
   def outcome_belongs_to_market

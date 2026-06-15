@@ -53,6 +53,24 @@ RSpec.describe "/groups/:group_id/markets/:market_id/resolution" do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["error"]).to include("before trading closes")
     end
+
+    it "lets the oracle resolve an open-ended market early with a cutoff, excluding later bets" do
+      open_market = travel_to(3.hours.ago) { create(:market, :open_ended, group:, oracle:) }
+      travel_to(2.hours.ago) { create(:position, market: open_market, outcome: open_market.outcomes.first, amount_cents: 100) }
+      travel_to(2.hours.ago) { create(:position, market: open_market, outcome: open_market.outcomes.second, amount_cents: 100) }
+      travel_to(30.minutes.ago) { create(:position, market: open_market, outcome: open_market.outcomes.second, amount_cents: 500) }
+
+      sign_in oracle.user
+      post "/groups/#{group.to_param}/markets/#{open_market.id}/resolution.json",
+           params: {outcome_id: open_market.outcomes.first.id, effective_at: 1.hour.ago.iso8601}
+
+      expect(response).to be_successful
+      expect(response.parsed_body).to include("status" => "resolved", "resolution_effective_at" => be_present)
+      expect(response.parsed_body["payouts"]).to contain_exactly(
+          a_hash_including("net_cents" => 100), a_hash_including("net_cents" => -100)
+        )
+      expect(group).to have_zero_sum_ledger
+    end
   end
 
   describe "PUT /" do

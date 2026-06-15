@@ -2,9 +2,12 @@
 
 # A Market is a proposition the members of a {Group} trade on ("Will Wenting
 # finish her marathon in under 4:30?"). It has two or more {Outcome}s, and members each hold at
-# most one {Position} until `locks_at` passes. "Locked" is derived from
-# `locks_at` at read time; no job flips a status. After the event, the market's
-# oracle resolves it to a winning outcome (Phase 4).
+# most one {Position} while it is {#open_for_trading?}. A `scheduled` market closes
+# trading when `locks_at` passes ("locked" is derived from `locks_at` at read time;
+# no job flips a status); an `open_ended` market has no `locks_at` and trades until
+# it is resolved. After the event, the market's oracle resolves it to a winning
+# outcome — early, against an effective-as-of cutoff, for open-ended or
+# time-sensitive markets (see {Markets::Resolver}).
 #
 # The creator or a group admin may edit `title`, `description`, and `locks_at`
 # while the market is open; position holders are emailed about edits that follow
@@ -32,9 +35,11 @@
 # |:--------------|:------------------------------------------------------------------------|
 # | `title`       | The proposition, phrased as a question.                                |
 # | `description` | Optional resolution criteria and context.                              |
-# | `locks_at`    | When trading closes. Must be in the future when set.                   |
+# | `kind`        | `scheduled` (closes at `locks_at`) or `open_ended` (trades until resolved). |
+# | `locks_at`    | When trading closes; required for `scheduled`, null for `open_ended`.   |
 # | `status`      | `open`, `resolved`, or `voided`.                                       |
 # | `resolved_at` | When the market was resolved.                                          |
+# | `resolution_effective_at` | The cutoff a resolution settled as of, when resolved early. |
 
 class Market < ApplicationRecord
   belongs_to :group
@@ -51,9 +56,12 @@ class Market < ApplicationRecord
   has_many :market_events, -> { order(:created_at, :id) }, dependent: :delete_all, inverse_of: :market
   has_many :comments, -> { order(:created_at, :id) }, dependent: :delete_all, inverse_of: :market
   has_many :positions, dependent: :destroy
+  # Deleted before outcomes, which the change rows hold a foreign key to.
+  has_many :position_changes, dependent: :delete_all
   has_many :outcomes, -> { order(:position) }, dependent: :destroy, inverse_of: :market
 
   enum :status, {open: "open", resolved: "resolved", voided: "voided"}, validate: true
+  enum :kind, {scheduled: "scheduled", open_ended: "open_ended"}, validate: true
 
   validates :title,
             presence: true,
@@ -62,22 +70,25 @@ class Market < ApplicationRecord
   validate :outcome_names_unique
   validate :oracle_actively_in_group
   validate :creator_in_group
-  validates :locks_at, presence: true
+  validates :locks_at, presence: true, if: :scheduled?
+  validate :open_ended_has_no_locks_at, if: :open_ended?
   validate :locks_at_in_future, if: :locks_at_changed?
 
   # Postponing trading lets the closing-soon notice fire again for the new
   # deadline.
   before_save :clear_closing_soon_notification, if: :locks_at_postponed?
 
-  # @return [true, false] Whether trading has closed because `locks_at` has
-  #   passed while the market is still open (awaiting resolution).
+  # @return [true, false] Whether a scheduled market's trading has closed
+  #   because `locks_at` has passed while it is still open (awaiting
+  #   resolution). Open-ended markets are never time-locked.
 
-  def locked? = open? && locks_at <= Time.current
+  def locked? = scheduled? && open? && locks_at <= Time.current
 
   # @return [true, false] Whether positions can currently be taken, changed, or
-  #   canceled: the market is open and `locks_at` has not passed.
+  #   canceled: the market is open, and (for scheduled markets) `locks_at` has
+  #   not passed. Open-ended markets trade until they are resolved.
 
-  def open_for_trading? = open? && locks_at.future?
+  def open_for_trading? = open? && (open_ended? || locks_at.future?)
 
   private
 
@@ -108,6 +119,10 @@ class Market < ApplicationRecord
 
   def locks_at_in_future
     errors.add(:locks_at, :must_be_future) if locks_at && !locks_at.future?
+  end
+
+  def open_ended_has_no_locks_at
+    errors.add(:locks_at, :not_for_open_ended) if locks_at.present?
   end
 
   def locks_at_postponed?

@@ -32,6 +32,18 @@ RSpec.describe Position do
     end
   end
 
+  describe "change history" do
+    it "records each committed change, then a cancellation on destroy" do
+      position = create(:position, market:, outcome: market.outcomes.first, amount_cents: 100)
+      position.update! amount_cents: 150
+      position.destroy!
+
+      history = PositionChange.where(market:, membership: position.membership).order(:created_at, :id)
+      expect(history.map(&:amount_cents)).to eq([100, 150, nil])
+      expect(history.last).to have_attributes(outcome_id: nil, amount_cents: nil)
+    end
+  end
+
   describe "amount" do
     it "enforces the group's amount range" do
       group = market.group

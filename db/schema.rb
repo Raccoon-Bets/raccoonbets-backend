@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_13_070447) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_15_002520) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -125,8 +125,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_070447) do
     t.bigint "creator_id", null: false
     t.text "description"
     t.bigint "group_id", null: false
-    t.datetime "locks_at", null: false
+    t.string "kind", default: "scheduled", null: false
+    t.datetime "locks_at"
     t.bigint "oracle_id", null: false
+    t.datetime "resolution_effective_at"
     t.datetime "resolved_at"
     t.bigint "resolved_by_id"
     t.string "status", default: "open", null: false
@@ -135,6 +137,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_070447) do
     t.bigint "winning_outcome_id"
     t.index ["group_id", "locks_at"], name: "index_markets_on_group_id_and_locks_at"
     t.index ["group_id", "status"], name: "index_markets_on_group_id_and_status"
+    t.check_constraint "(kind::text = 'scheduled'::text) = (locks_at IS NOT NULL)", name: "markets_locks_at_matches_kind_check"
     t.check_constraint "(status::text = 'resolved'::text) = (winning_outcome_id IS NOT NULL)", name: "markets_resolved_iff_winning_outcome_check"
   end
 
@@ -159,6 +162,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_070447) do
     t.datetime "updated_at", null: false
     t.index ["market_id", "name"], name: "index_outcomes_on_market_id_and_name", unique: true
     t.index ["market_id", "position"], name: "index_outcomes_on_market_id_and_position", unique: true
+  end
+
+  create_table "position_changes", force: :cascade do |t|
+    t.bigint "amount_cents"
+    t.datetime "created_at", null: false
+    t.bigint "market_id", null: false
+    t.bigint "membership_id", null: false
+    t.bigint "outcome_id"
+    t.index ["market_id", "created_at"], name: "index_position_changes_on_market_id_and_created_at"
+    t.index ["market_id", "membership_id", "created_at"], name: "idx_on_market_id_membership_id_created_at_aafa81d315"
   end
 
   create_table "positions", force: :cascade do |t|
@@ -367,6 +380,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_070447) do
   add_foreign_key "memberships", "users"
   add_foreign_key "memberships", "users", column: "invited_by_id"
   add_foreign_key "outcomes", "markets"
+  add_foreign_key "position_changes", "markets"
+  add_foreign_key "position_changes", "memberships"
+  add_foreign_key "position_changes", "outcomes"
   add_foreign_key "positions", "markets"
   add_foreign_key "positions", "memberships"
   add_foreign_key "positions", "outcomes"

@@ -84,6 +84,7 @@ en:
               not_a_member: must be a member of this group
             locks_at:
               must_be_future: must be in the future
+              not_for_open_ended: is not allowed for an open-ended market
         position:
           attributes:
             base:
@@ -122,6 +123,7 @@ en:
         already_resolved: This market has already been resolved; correct it instead.
         not_open: This market is not open.
         not_locked: This market cannot be resolved before trading closes.
+        effective_at_invalid: The effective resolution time must be between when the market opened and now.
         already_voided: This market has already been voided.
         not_resolved: Only a resolved market can be corrected.
         same_outcome: This market is already resolved to that outcome.
