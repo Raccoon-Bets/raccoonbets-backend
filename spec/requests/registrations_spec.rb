@@ -83,7 +83,7 @@ RSpec.describe "Account" do
         body = response.parsed_body
         expect(body["venmo_handle"]).to eq("tim-morgan")
         expect(body["paypal_handle"]).to eq("timmorgan")
-        expect(body["cashapp_cashtag"]).to eq("$timmy")
+        expect(body["cashapp_cashtag"]).to eq("timmy") # the pasted "$" sigil is stripped
       end
 
       it "handles validation errors" do

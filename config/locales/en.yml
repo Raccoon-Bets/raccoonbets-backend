@@ -106,6 +106,14 @@ en:
               not_a_member: must be an active member of this group
             recorded_by:
               not_a_member: must be an active member of this group
+        user:
+          attributes:
+            venmo_handle:
+              invalid: must be 5–30 letters, numbers, hyphens, or underscores
+            paypal_handle:
+              invalid: must be 1–20 letters or numbers, with no spaces or symbols
+            cashapp_cashtag:
+              invalid: must be up to 20 letters, numbers, hyphens, or underscores, and include at least one letter
   application_controller:
     errors:
       internal_server_error: An internal error has occurred.

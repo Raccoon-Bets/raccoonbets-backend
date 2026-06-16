@@ -34,7 +34,7 @@ RSpec.describe "/groups/:group_id/settle_up" do
                 name:            alice.user.name,
                 venmo_handle:    "alice-pays",
                 paypal_handle:   nil,
-                cashapp_cashtag: "$alice"
+                cashapp_cashtag: "alice"
             }
         }]
       )

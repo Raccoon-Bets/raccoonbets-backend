@@ -54,8 +54,20 @@ class User < ApplicationRecord
             presence:   true,
             uniqueness: {case_sensitive: false},
             format:     {with: /\A[^@\s]+@[^@\s]+\z/}
-  validates :venmo_handle, :paypal_handle, :cashapp_cashtag,
-            length:    {maximum: 100},
+  # Settle-up handles are stored bare (no @/$); the frontend adds the sigil and
+  # builds the deep link. Normalize away a pasted prefix and surrounding space.
+  normalizes :venmo_handle,    with: ->(handle) { handle.strip.delete_prefix("@").presence }
+  normalizes :cashapp_cashtag, with: ->(handle) { handle.strip.delete_prefix("$").presence }
+  normalizes :paypal_handle,   with: ->(handle) { handle.strip.delete_prefix("paypal.me/").presence }
+
+  validates :venmo_handle,
+            format:    {with: /\A[A-Za-z0-9_-]{5,30}\z/},
+            allow_nil: true
+  validates :paypal_handle,
+            format:    {with: /\A[A-Za-z0-9]{1,20}\z/},
+            allow_nil: true
+  validates :cashapp_cashtag,
+            format:    {with: /\A(?=.*[A-Za-z])[A-Za-z0-9_-]{1,20}\z/},
             allow_nil: true
 
   # @return [NotificationPreferences] the per-event x channel notification prefs.
