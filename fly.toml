@@ -19,8 +19,8 @@ console_command = '/rails/bin/rails console'
 
 [http_service]
   internal_port = 3000
-  # Keep one machine always-on so the in-Puma Solid Queue scheduler runs the
-  # recurring closing-soon scan reliably (suspend would freeze it).
+  # Keep one machine always-on so the embedded Sidekiq workers and sidekiq-cron
+  # scheduler run the recurring closing-soon scan reliably (suspend would freeze it).
   auto_stop_machines = 'suspend'
   auto_start_machines = true
   min_machines_running = 1

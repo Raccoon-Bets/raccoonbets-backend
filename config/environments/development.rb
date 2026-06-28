@@ -33,7 +33,7 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
-  config.active_job.queue_adapter = :solid_queue
+  config.active_job.queue_adapter = :sidekiq
 
   # Open outgoing mail in the browser instead of delivering it, so the
   # account-verification and password-reset links are reachable in

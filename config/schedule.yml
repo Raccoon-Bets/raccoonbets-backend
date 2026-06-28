@@ -1,0 +1,5 @@
+# sidekiq-cron schedules, loaded on Sidekiq server startup. Times are UTC.
+closing_soon_scan:
+  cron: "*/15 * * * *"
+  class: Notifications::ClosingSoonScanJob
+  queue: default

@@ -44,9 +44,11 @@ activate_control_app unless ENV["RAILS_ENV"]&.match?(/test|cypress/)
 # Yabeda metrics collection (skip in test/cypress)
 plugin :yabeda unless ENV["RAILS_ENV"]&.match?(/test|cypress/)
 
-# Run Solid Queue workers inside the web process (no separate machine). Skipped
-# in test/cypress, which run jobs via the :test/:inline adapters.
-plugin :solid_queue unless ENV["RAILS_ENV"]&.match?(/test|cypress/)
+# Run Sidekiq workers embedded in the web process (no separate machine). Skipped
+# in test/cypress, which run jobs via the :test/:inline adapters. The plugin
+# lives in this app's lib/, so put it on the load path for Puma to require.
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+plugin :sidekiq unless ENV["RAILS_ENV"]&.match?(/test|cypress/)
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.

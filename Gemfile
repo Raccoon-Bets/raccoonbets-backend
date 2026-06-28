@@ -40,7 +40,8 @@ gem "oj"
 gem "resend"
 
 # JOBS
-gem "solid_queue"
+gem "sidekiq"
+gem "sidekiq-cron"
 
 # PUSH
 gem "web-push"
