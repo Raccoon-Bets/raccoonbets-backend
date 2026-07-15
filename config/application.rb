@@ -75,7 +75,7 @@ module Raccoonbets
     }
 
     config.host_authorization = {
-        exclude: ->(request) { request.path.start_with?("/up") || request.path == "/metrics" }
+        exclude: ->(request) { request.path.start_with?("/up", "/_anycable") || request.path == "/metrics" }
     }
 
     # ── OmniAuth session ──────────────────────────────────────────────────
