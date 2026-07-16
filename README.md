@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/RISCfuture/raccoonbets-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/RISCfuture/raccoonbets-backend/actions/workflows/ci.yml)
 [![Deploy](https://github.com/RISCfuture/raccoonbets-backend/actions/workflows/deploy.yml/badge.svg)](https://github.com/RISCfuture/raccoonbets-backend/actions/workflows/deploy.yml)
-[![Ruby](https://img.shields.io/badge/Ruby-4.0.5-red.svg)](https://www.ruby-lang.org)
+[![Ruby](https://img.shields.io/badge/Ruby-4.0.6-red.svg)](https://www.ruby-lang.org)
 [![Rails](https://img.shields.io/badge/Rails-8.1.3-red.svg)](https://rubyonrails.org)
 
 Raccoon Bets is a private prediction market for friend groups. Members create
@@ -21,7 +21,7 @@ repository at <https://github.com/RISCfuture/raccoonbets-frontend>.
 
 ### Installation and Running
 
-The back-end requires Ruby 4.0.5, PostgreSQL, and Redis. Install the system
+The back-end requires Ruby 4.0.6, PostgreSQL, and Redis. Install the system
 dependencies with Homebrew:
 
 ```sh
@@ -37,10 +37,10 @@ as siblings. To run the whole stack in development, create a `Procfile` in the
 parent directory such as:
 
 ```procfile
-backend: cd Backend && rvm 4.0.5@raccoonbets exec rails server
+backend: cd Backend && rvm 4.0.6@raccoonbets exec rails server
 frontend: cd Frontend && pnpm dev
-anycable: cd Backend && rvm 4.0.5@raccoonbets exec anycable
-ws: cd Backend && rvm 4.0.5@raccoonbets exec bin/anycable-go --port=8080
+anycable: cd Backend && rvm 4.0.6@raccoonbets exec anycable
+ws: cd Backend && rvm 4.0.6@raccoonbets exec bin/anycable-go --port=8080
 ```
 
 Install `overmind` to run the Procfile with `overmind start`.
