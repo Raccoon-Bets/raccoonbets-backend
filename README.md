@@ -37,11 +37,20 @@ as siblings. To run the whole stack in development, create a `Procfile` in the
 parent directory such as:
 
 ```procfile
-backend: cd Backend && rvm 4.0.6@raccoonbets exec rails server
+backend: cd Backend && PORT=5000 ANYCABLE_HTTP_RPC=true rvm 4.0.6@raccoonbets do rails server
 frontend: cd Frontend && pnpm dev
-anycable: cd Backend && rvm 4.0.6@raccoonbets exec anycable
-ws: cd Backend && rvm 4.0.6@raccoonbets exec bin/anycable-go --port=8080
+ws: cd Backend && rvm 4.0.6@raccoonbets do bin/anycable-go --port=8080 --rpc_host=http://localhost:5000/_anycable
 ```
+
+`PORT=5000` matches `config/urls.yml` and the front-end's `.env` files; Puma
+would otherwise default to 3000. `ANYCABLE_HTTP_RPC` mounts AnyCable's RPC
+endpoint at `/_anycable` inside the Rails server, the way production runs it, so
+no separate RPC process is needed. Pass `--port` to `anycable-go` explicitly: it
+also reads `$PORT`, which overmind sets per-process. Sidekiq runs embedded in
+Puma (see `config/puma.rb`), so it needs no process of its own either.
+
+Postgres and Redis are expected to be running already, e.g. as brew services
+(`brew services start postgresql@17 redis`).
 
 Install `overmind` to run the Procfile with `overmind start`.
 
