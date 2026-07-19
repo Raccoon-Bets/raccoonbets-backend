@@ -81,4 +81,34 @@ RSpec.describe Market do
       expect(market.closing_soon_notified_at).to be_present
     end
   end
+
+  describe "closing-soon scheduling" do
+    include ActiveJob::TestHelper
+
+    let(:group) { create(:group) }
+
+    it "schedules the closing-soon notice at locks_at minus the window on create" do
+      freeze_time do
+        market = create(:market, group:, locks_at: 3.hours.from_now)
+
+        expect(Notifications::ClosingSoonNotifyJob).to have_been_enqueued.
+            with(market.id).at(3.hours.from_now - Market::CLOSING_SOON_WINDOW)
+      end
+    end
+
+    it "schedules nothing for an open-ended market" do
+      expect { create(:market, :open_ended, group:) }.
+          not_to have_enqueued_job(Notifications::ClosingSoonNotifyJob)
+    end
+
+    it "reschedules the notice when locks_at is postponed" do
+      market = create(:market, group:, locks_at: 2.hours.from_now)
+
+      freeze_time do
+        expect { market.update!(locks_at: 5.hours.from_now) }.
+            to have_enqueued_job(Notifications::ClosingSoonNotifyJob).
+            with(market.id).at(5.hours.from_now - Market::CLOSING_SOON_WINDOW)
+      end
+    end
+  end
 end

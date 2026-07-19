@@ -1,5 +1,9 @@
 # sidekiq-cron schedules, loaded on Sidekiq server startup. Times are UTC.
-closing_soon_scan:
-  cron: "*/15 * * * *"
-  class: Notifications::ClosingSoonScanJob
+#
+# Closing-soon notices are scheduled per market at lock time (see
+# Market#schedule_closing_soon_notification). This daily sweep is only a safety
+# net that re-enqueues any per-market job lost from the queue.
+closing_soon_sweep:
+  cron: "0 8 * * *"
+  class: Notifications::ClosingSoonSweepJob
   queue: default

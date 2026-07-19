@@ -42,6 +42,9 @@
 # | `resolution_effective_at` | The cutoff a resolution settled as of, when resolved early. |
 
 class Market < ApplicationRecord
+  # How far before `locks_at` the "closing soon" notice fires.
+  CLOSING_SOON_WINDOW = 60.minutes
+
   belongs_to :group
   belongs_to :creator, class_name: "Membership", inverse_of: :created_markets
   belongs_to :oracle, class_name: "Membership", inverse_of: :oracle_markets
@@ -78,11 +81,22 @@ class Market < ApplicationRecord
   # deadline.
   before_save :clear_closing_soon_notification, if: :locks_at_postponed?
 
+  # Schedule the closing-soon notice for its exact moment whenever the lock time
+  # is set or changed. {Notifications::ClosingSoonSweepJob} is the safety net if
+  # a scheduled job is ever lost.
+  after_commit :schedule_closing_soon_notification, if: :saved_change_to_locks_at?
+
   # @return [true, false] Whether a scheduled market's trading has closed
   #   because `locks_at` has passed while it is still open (awaiting
   #   resolution). Open-ended markets are never time-locked.
 
   def locked? = scheduled? && open? && locks_at <= Time.current
+
+  # @return [true, false] Whether trading is still open but `locks_at` falls
+  #   within the {CLOSING_SOON_WINDOW} ahead — the moment the closing-soon
+  #   notice becomes due. Open-ended markets never close soon.
+
+  def closing_soon? = scheduled? && open? && locks_at&.future? && locks_at <= CLOSING_SOON_WINDOW.from_now
 
   # @return [true, false] Whether positions can currently be taken, changed, or
   #   canceled: the market is open, and (for scheduled markets) `locks_at` has
@@ -132,5 +146,11 @@ class Market < ApplicationRecord
 
   def clear_closing_soon_notification
     self.closing_soon_notified_at = nil
+  end
+
+  def schedule_closing_soon_notification
+    return unless scheduled? && open? && locks_at&.future?
+
+    Notifications::ClosingSoonNotifyJob.set(wait_until: locks_at - CLOSING_SOON_WINDOW).perform_later(id)
   end
 end
