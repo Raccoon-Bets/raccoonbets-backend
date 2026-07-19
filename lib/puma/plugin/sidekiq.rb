@@ -17,6 +17,10 @@ Puma::Plugin.create do
       @sidekiq.run
     end
 
-    launcher.events.after_stopped { @sidekiq&.stop }
+    # Puma fires after_stopped from inside its SIGTERM trap handler, and
+    # Sidekiq's shutdown acquires a Mutex (via connection_pool), which Ruby
+    # forbids in a trap context. Stopping on a fresh thread escapes the trap;
+    # joining keeps shutdown graceful so in-flight jobs still drain.
+    launcher.events.after_stopped { Thread.new { @sidekiq&.stop }.join }
   end
 end

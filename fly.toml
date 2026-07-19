@@ -9,6 +9,11 @@ app = 'raccoonbets-backend'
 primary_region = 'sjc'
 console_command = '/rails/bin/rails console'
 
+# Give the embedded Sidekiq its full graceful-shutdown window to drain in-flight
+# jobs on deploy (Sidekiq's default timeout is 25s) before Fly sends SIGKILL.
+# Fly's default kill_timeout is 5s, which would cut the drain short.
+kill_timeout = 30
+
 [build]
 
 [deploy]
