@@ -8,7 +8,7 @@ Sidekiq.configure_server do |config|
   config.redis = redis
 
   config.on(:startup) do
-    Sidekiq::Cron::Job.load_from_hash!(YAML.load_file(Rails.root.join("config", "schedule.yml")))
+    CronSchedule.reconcile!(YAML.load_file(Rails.root.join("config", "schedule.yml")))
   end
 end
 
