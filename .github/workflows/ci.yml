@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17
+        image: postgres:18.3
         env:
           POSTGRES_DB: raccoonbets_test
           POSTGRES_USER: raccoonbets

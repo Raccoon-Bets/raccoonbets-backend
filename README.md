@@ -50,7 +50,7 @@ also reads `$PORT`, which overmind sets per-process. Sidekiq runs embedded in
 Puma (see `config/puma.rb`), so it needs no process of its own either.
 
 Postgres and Redis are expected to be running already, e.g. as brew services
-(`brew services start postgresql@17 redis`).
+(`brew services start postgresql@18 redis`).
 
 Install `overmind` to run the Procfile with `overmind start`.
 
