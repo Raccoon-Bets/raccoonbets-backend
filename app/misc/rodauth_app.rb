@@ -69,7 +69,7 @@ class RodauthApp < Rodauth::Rails::App
       # plain hash JWT mode provides. Coerce it so JWT.encode serializes the
       # claims instead of the object's #to_s.
       h = h.to_hash unless h.kind_of?(Hash)
-      h["e"] = account[:email] if account
+      h[:e] = account[:email] if account
       h
     end
 
@@ -259,6 +259,12 @@ class RodauthApp < Rodauth::Rails::App
     create_account_autologin? false
     # Password is captured at signup, not at verification time.
     verify_account_set_password? false
+
+    # Verifying an account rotates its verification key rather than dropping it,
+    # leaving a live token behind for every verified user. Nothing can resend or
+    # redeem the key once the account is open, so discard it — the same thing
+    # rodauth-omniauth does when a social login verifies an account.
+    after_verify_account { remove_verify_account_key }
 
     # ── Account closure ───────────────────────────────────────────────────
 
