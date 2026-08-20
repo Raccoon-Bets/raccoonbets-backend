@@ -36,7 +36,9 @@ Rails.application.configure do
 
   # Run jobs synchronously in e2e so deliver_later mail lands in ActionMailer
   # deliveries for the Cypress::LastEmail helper, and push dispatch runs inline.
-  config.active_job.queue_adapter = :inline
+  # The inline_scheduled variant also tolerates `set(wait_until:)` enqueues, which
+  # the stock :inline adapter rejects outright.
+  config.active_job.queue_adapter = :inline_scheduled
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
