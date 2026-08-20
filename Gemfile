@@ -3,10 +3,13 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby "4.0.6"
+ruby "4.0.7"
 
 # CORE
 gem "bootsnap", require: false
+# Rails 8.1's ActiveSupport::JSON.decode passes its options hash to JSON.parse
+# positionally, which json 3.x no longer accepts.
+gem "json", "< 3"
 gem "puma"
 gem "rails"
 gem "responders"

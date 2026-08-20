@@ -6,7 +6,6 @@ Sentry.init do |config|
 
   config.send_default_pii = true
 
-  config.enable_logs = true
   config.enabled_patches = %i[logger]
 
   config.traces_sample_rate = 1.0

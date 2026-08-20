@@ -260,6 +260,12 @@ class RodauthApp < Rodauth::Rails::App
     # Password is captured at signup, not at verification time.
     verify_account_set_password? false
 
+    # Verifying an account rotates its verification key rather than dropping it,
+    # leaving a live token behind for every verified user. Nothing can resend or
+    # redeem the key once the account is open, so discard it — the same thing
+    # rodauth-omniauth does when a social login verifies an account.
+    after_verify_account { remove_verify_account_key }
+
     # ── Account closure ───────────────────────────────────────────────────
 
     delete_account_on_close? true
