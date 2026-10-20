@@ -29,10 +29,8 @@ class Groups::CommentsController < ApplicationController
   # | `:comment` | Parameterized Comment attributes (`body`). |
 
   def create
-    @comment = @market.comments.new(comment_params)
-    @comment.author = current_membership
-    if @comment.save
-      Notifications::DispatchJob.perform_later(event: "market_commented", record_id: @comment.id)
+    @comment = Groups::Participation.new(current_membership).create_comment(@market.id, comment_params)
+    if @comment.persisted?
       render_market_detail
     else
       render json: {errors: @comment.errors}, status: :unprocessable_content
@@ -47,10 +45,7 @@ class Groups::CommentsController < ApplicationController
   # * `DELETE /groups/:group_id/markets/:market_id/comments/:id.json`
 
   def destroy
-    @comment = @market.comments.find(params.expect(:id))
-    return render_not_deletable unless can_delete?(@comment)
-
-    @comment.destroy
+    @comment = Groups::Participation.new(current_membership).delete_comment(@market.id, params.expect(:id))
     render_market_detail
   end
 
@@ -61,26 +56,4 @@ class Groups::CommentsController < ApplicationController
   end
 
   def comment_params = params.expect(comment: %i[body])
-
-  def can_delete?(comment)
-    current_membership.admin? || comment.author_membership_id == current_membership.id
-  end
-
-  # Re-renders the same payload as `GET /markets/:id`, so the store can replace
-  # its loaded market (comments, pools, positions all consistent).
-  def render_market_detail
-    @market = current_group.markets.
-        includes(:outcomes, positions: {membership: :user}, creator: :user, oracle: :user,
-                 resolved_by: :user, market_events: [:outcome, {actor: :user}],
-                 comments: {author: :user}).
-        find(@market.id)
-    load_trading_context [@market]
-    load_resolution_context @market
-    render "groups/markets/show"
-  end
-
-  def render_not_deletable
-    render json:   {error: I18n.t("groups.comments.errors.not_deletable")},
-           status: :forbidden
-  end
 end

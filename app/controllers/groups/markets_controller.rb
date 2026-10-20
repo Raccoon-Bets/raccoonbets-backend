@@ -19,9 +19,6 @@ class Groups::MarketsController < ApplicationController
   before_action :find_market, only: %i[show update destroy]
   before_action :require_group_admin!, only: :destroy
 
-  # The edited fields position holders are told about.
-  NOTIFIED_EDIT_FIELDS = %w[title description locks_at].freeze
-
   # Lists the group's markets: open markets first by soonest `locks_at`, then
   # resolved and voided markets, most recently concluded first.
   #
@@ -72,16 +69,7 @@ class Groups::MarketsController < ApplicationController
   # | `:market` | Parameterized Market attributes (`title`, `description`, optional `oracle_id` and `kind`; `locks_at` is required for a `scheduled` market and omitted for an `open_ended` one) plus `outcomes`, an array of at least two outcome names. |
 
   def create
-    @market         = current_group.markets.new(market_params)
-    @market.creator = current_membership
-    @market.oracle_id ||= current_membership.id
-    outcome_names.each_with_index { |name, position| @market.outcomes.build(name:, position:) }
-
-    @market.save
-    if @market.persisted?
-      GroupChannel.broadcast_event current_group, :market_created, market_id: @market.id
-      Notifications::DispatchJob.perform_later(event: "market_created", record_id: @market.id)
-    end
+    @market = Groups::Participation.new(current_membership).create_market(market_params, outcomes: outcome_names)
     load_trading_context [@market]
     respond_with @market
   end
@@ -103,13 +91,7 @@ class Groups::MarketsController < ApplicationController
   # | `:market` | Parameterized Market attributes (`title`, `description`, `locks_at`). |
 
   def update
-    return render_not_editor unless editor?
-    return render_not_open unless @market.open?
-
-    if @market.update(market_params)
-      GroupChannel.broadcast_event current_group, :market_updated, market_id: @market.id
-      notify_position_holders_of_edit
-    end
+    @market = Groups::Participation.new(current_membership).update_market(@market.id, market_params)
     respond_with @market
   end
 
@@ -126,7 +108,7 @@ class Groups::MarketsController < ApplicationController
   # * `DELETE /groups/:group_id/markets/:id.json`
 
   def destroy
-    recipients = other_position_holders
+    recipients = @market.position_holders - [current_membership.user]
     title      = @market.title
     if @market.destroy
       GroupChannel.broadcast_event current_group, :market_deleted, market_id: @market.id
@@ -141,13 +123,7 @@ class Groups::MarketsController < ApplicationController
   private
 
   def find_market
-    @market = current_group.markets.
-        includes(:outcomes, positions: {membership: :user}, creator: :user, oracle: :user,
-                 resolved_by: :user, market_events: [:outcome, {actor: :user}],
-                 comments: {author: :user}).
-        find(params.expect(:id))
-    load_trading_context [@market]
-    load_resolution_context @market
+    @market = load_market_detail(params.expect(:id))
   end
 
   def market_params
@@ -160,48 +136,6 @@ class Groups::MarketsController < ApplicationController
   def outcome_names = Array(params[:market][:outcomes]).map(&:to_s)
 
   def filtered_markets
-    scope = current_group.markets
-    scope = case params[:status]
-              when "locked" then scope.open.where(locks_at: ..Time.current)
-              when "open", "resolved", "voided" then scope.where(status: params[:status])
-              else scope
-            end
-    scope.order(Arel.sql(<<~SQL.squish))
-      CASE WHEN status = 'open' THEN 0 ELSE 1 END,
-      CASE WHEN status = 'open' THEN locks_at END ASC,
-      COALESCE(resolved_at, locks_at) DESC,
-      id ASC
-    SQL
-  end
-
-  def editor? = current_membership.admin? || @market.creator_id == current_membership.id
-
-  # Enqueued only after the UPDATE has committed (the request runs outside
-  # any wrapping transaction), so a rolled-back edit never mails anyone.
-  def notify_position_holders_of_edit
-    changes = @market.saved_changes.slice(*NOTIFIED_EDIT_FIELDS)
-    return if changes.empty?
-
-    other_position_holders.each do |user|
-      AdminActionMailer.market_edited(user:, market: @market, changes:,
-                                      actor_name: current_membership.user.name).deliver_later
-    end
-  end
-
-  # Every position holder's user except the actor — the people an edit or
-  # delete must be explained to.
-  def other_position_holders
-    @market.positions.includes(membership: :user).map { |position| position.membership.user }.uniq -
-      [current_membership.user]
-  end
-
-  def render_not_editor
-    render json:   {error: I18n.t("groups.markets.errors.not_editor")},
-           status: :forbidden
-  end
-
-  def render_not_open
-    render json:   {error: I18n.t("groups.markets.errors.not_open")},
-           status: :unprocessable_content
+    Groups::MemberQueries.new(current_membership).markets(status: params[:status])
   end
 end

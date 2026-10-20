@@ -23,7 +23,23 @@ allowed_origins =
 # the origin it redirects the browser back to against this same trusted set.
 Rails.application.config.x.frontend_origin_patterns = allowed_origins
 
+# Hosted assistants whose browser clients call the MCP endpoint directly.
+# Shared with the MCP transport's origin check (Mcp::ServerController).
+Rails.application.config.x.mcp_assistant_origins = %w[https://chatgpt.com https://claude.ai].freeze
+
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
+  allow do
+    origins "*"
+    resource "/.well-known/*", headers: :any, methods: %i[get options]
+    %w[/oauth/register /oauth/token /oauth/revoke].each do |path|
+      resource path, headers: %w[Authorization Content-Type], methods: %i[post options]
+    end
+  end
+  allow do
+    origins Rails.application.config.urls.frontend, *Rails.application.config.x.mcp_assistant_origins
+    resource "/mcp", headers: %w[Authorization Content-Type MCP-Protocol-Version MCP-Session-Id],
+                     methods: %i[get post delete options], expose: %w[WWW-Authenticate MCP-Session-Id]
+  end
   allow do
     origins(*allowed_origins)
     resource "*",

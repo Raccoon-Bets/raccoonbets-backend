@@ -20,6 +20,11 @@ module Authentication
     @_auth_headers = {"Authorization" => "Bearer #{jwt_for(user)}"}
   end
 
+  # Stops injecting the Authorization header for the rest of the example.
+  def sign_out
+    @_auth_headers = nil
+  end
+
   # Override request helpers to inject auth headers when signed in.
   %i[get post put patch delete head].each do |method|
     define_method(method) do |path, **kwargs|

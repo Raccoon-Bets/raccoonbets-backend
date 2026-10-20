@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Notification dispatch hooks", type: :request do
+RSpec.describe "Notification dispatch hooks" do
   include ActiveJob::TestHelper
 
   let(:group) { create :group }

@@ -6,12 +6,14 @@
 # Associations
 # ------------
 #
-# |                 |                                                 |
-# |:----------------|:------------------------------------------------|
-# | `webauthn_keys` | Registered passkey credentials.                 |
-# | `identities`    | Linked external logins (Google, Apple).         |
-# | `memberships`   | The {Membership}s tying this user to {Group}s.  |
-# | `groups`        | The {Group}s this user belongs to (any status). |
+# |                              |                                                            |
+# |:-----------------------------|:-----------------------------------------------------------|
+# | `webauthn_keys`              | Registered passkey credentials.                            |
+# | `identities`                 | Linked external logins (Google, Apple).                    |
+# | `mcp_connections`            | The {McpConnection}s granting assistants access over MCP.  |
+# | `mcp_authorization_requests` | The OAuth consent requests this user has claimed.          |
+# | `memberships`                | The {Membership}s tying this user to {Group}s.             |
+# | `groups`                     | The {Group}s this user belongs to (any status).            |
 #
 # Properties
 # ----------
@@ -19,6 +21,7 @@
 # |                   |                                                                                     |
 # |:------------------|:------------------------------------------------------------------------------------|
 # | `name`            | The user's display name.                                                            |
+# | `status_id`       | Rodauth's account status: {UNVERIFIED_STATUS}, {OPEN_STATUS}, or {CLOSED_STATUS}.   |
 # | `email`           | The user's email, used to uniquely identify the user and for forgotten passwords.   |
 # | `locale`          | The user's preferred UI/email language as a BCP-47 tag, or `nil` for default.       |
 # | `superadmin`      | Whether the user can administer all groups site-wide (squatting control, suspends). |
@@ -32,6 +35,17 @@ class User < ApplicationRecord
   # The locales the app is translated into. Mirrors the frontend's `SUPPORTED_LOCALES`.
   SUPPORTED_LOCALES = %w[en].freeze
 
+  # Rodauth's `status_id` values. They match the `account_*_status_value`
+  # settings in {RodauthApp}, whose configuration runs while this class loads
+  # and so cannot reference these constants.
+
+  # `status_id` of an account whose email has not been verified yet.
+  UNVERIFIED_STATUS = 1
+  # `status_id` of an account that can sign in and use the site.
+  OPEN_STATUS = 2
+  # `status_id` of an account that has been closed.
+  CLOSED_STATUS = 3
+
   validates :locale, inclusion: {in: SUPPORTED_LOCALES}, allow_nil: true
 
   has_many :webauthn_keys, class_name:  "AccountWebauthnKey",
@@ -42,6 +56,9 @@ class User < ApplicationRecord
   has_many :identities, class_name: "AccountIdentity",
                         dependent:  :delete_all,
                         inverse_of: :user
+
+  has_many :mcp_connections, dependent: :destroy
+  has_many :mcp_authorization_requests, dependent: :delete_all
 
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
@@ -69,6 +86,9 @@ class User < ApplicationRecord
   validates :cashapp_cashtag,
             format:    {with: /\A(?=.*[A-Za-z])[A-Za-z0-9_-]{1,20}\z/},
             allow_nil: true
+
+  # @return [Boolean] whether the account is open (verified and not closed).
+  def open? = status_id == OPEN_STATUS
 
   # @return [NotificationPreferences] the per-event x channel notification prefs.
   def notification_preferences_object

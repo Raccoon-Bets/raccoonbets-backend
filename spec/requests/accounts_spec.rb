@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Accounts", type: :request do
+RSpec.describe "Accounts" do
   let(:user) { create(:user) }
 
   it "exposes normalized notification preferences and the VAPID public key" do

@@ -42,13 +42,4 @@ module GroupScoping
     render json:   {error: I18n.t("group_scoping.errors.not_an_admin")},
            status: :forbidden
   end
-
-  # Renders 403 unless the current member is a group admin or the oracle of
-  # the market in `@market` — set `@market` in an earlier before_action.
-  def require_oracle_or_admin!
-    return if current_membership && (current_membership.admin? || current_membership.id == @market.oracle_id)
-
-    render json:   {error: I18n.t("group_scoping.errors.not_oracle_or_admin")},
-           status: :forbidden
-  end
 end

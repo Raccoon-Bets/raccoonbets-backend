@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+{
+    client_name:     @application.name,
+    redirect_uri:    @redirect_uri,
+    write_requested: @write_requested,
+    lifetime_days:   McpConnection::LIFETIME.in_days.to_i,
+    groups:          @groups.as_json(only: %i[id name]),
+    account:         @account.slice(:name, :email)
+}.to_json

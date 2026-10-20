@@ -104,6 +104,10 @@ class Market < ApplicationRecord
 
   def open_for_trading? = open? && (open_ended? || locks_at.future?)
 
+  # @return [Array<User>] The distinct users holding a position on the market.
+
+  def position_holders = positions.includes(membership: :user).map { it.membership.user }.uniq
+
   private
 
   def at_least_two_outcomes

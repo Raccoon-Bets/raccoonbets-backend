@@ -13,7 +13,6 @@ class Groups::ResolutionsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_membership!
   before_action :find_market
-  before_action :require_oracle_or_admin!, only: %i[create destroy]
   before_action :require_group_admin!, only: :update
 
   rescue_from Markets::Resolver::Error, with: :resolution_error
@@ -35,7 +34,8 @@ class Groups::ResolutionsController < ApplicationController
   # | `:effective_at` | Optional. When the outcome became known, for an early resolution: the pool is settled as it stood then, excluding later bets. Required to early-resolve a scheduled market; defaults to now for an open-ended one. |
 
   def create
-    Markets::Resolver.resolve(@market, outcome, current_membership, effective_at:)
+    Groups::Participation.new(current_membership).resolve_market(@market.id, params.expect(:outcome_id),
+                                                                 effective_at: params[:effective_at])
     render_market_detail
   end
 
@@ -68,7 +68,7 @@ class Groups::ResolutionsController < ApplicationController
   # * `DELETE /groups/:group_id/markets/:market_id/resolution.json`
 
   def destroy
-    Markets::Resolver.void @market, current_membership
+    Groups::Participation.new(current_membership).void_market(@market.id)
     render_market_detail
   end
 
@@ -79,31 +79,6 @@ class Groups::ResolutionsController < ApplicationController
   end
 
   def outcome = @market.outcomes.find(params.expect(:outcome_id))
-
-  # Parses the optional early-resolution cutoff, mapping a malformed timestamp
-  # to the same 422 the resolver's own guards render.
-  def effective_at
-    return if params[:effective_at].blank?
-
-    Time.zone.parse(params[:effective_at].to_s) or raise_effective_at_invalid
-  rescue ArgumentError
-    raise_effective_at_invalid
-  end
-
-  def raise_effective_at_invalid
-    raise Markets::Resolver::Error, I18n.t("markets.resolver.errors.effective_at_invalid")
-  end
-
-  def render_market_detail
-    @market = current_group.markets.
-        includes(:outcomes, positions: {membership: :user}, creator: :user, oracle: :user,
-                 resolved_by: :user, market_events: [:outcome, {actor: :user}],
-                 comments: {author: :user}).
-        find(@market.id)
-    load_trading_context [@market]
-    load_resolution_context @market
-    render "groups/markets/show"
-  end
 
   def resolution_error(error)
     render json: {error: error.message}, status: :unprocessable_content

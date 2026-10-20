@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+{
+    enabled:     Mcp::Configuration.enabled?,
+    server_url:  Mcp::Configuration.resource,
+    connections: McpConnectionSerializer.new(@connections).serializable_hash
+}.to_json

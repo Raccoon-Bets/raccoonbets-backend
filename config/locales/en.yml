@@ -271,3 +271,12 @@ en:
       on_or_before: must be on or before %{restriction}
       after: must be after %{restriction}
       on_or_after: must be on or after %{restriction}
+  mcp:
+    tool_context:
+      errors:
+        read_only: This connection has read-only access.
+        not_found: The requested record is not available in an authorized group.
+  doorkeeper:
+    errors:
+      messages:
+        invalid_target: The requested resource is not served by this authorization server.

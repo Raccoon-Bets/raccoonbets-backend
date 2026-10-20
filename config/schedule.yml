@@ -7,3 +7,9 @@ closing_soon_sweep:
   cron: "0 8 * * *"
   class: Notifications::ClosingSoonSweepJob
   queue: default
+
+# Deletes expired consent requests and OAuth clients nobody connected.
+oauth_cleanup:
+  cron: "30 8 * * *"
+  class: Oauth::CleanupJob
+  queue: default

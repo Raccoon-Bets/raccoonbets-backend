@@ -94,3 +94,86 @@ Authentication is handled by Rodauth, including passkey support.
 No real money changes hands. Each group has its own currency, and every market
 is a parimutuel pool: positions move balances on an internal ledger, and members
 settle net balances out-of-band through payment deep links.
+
+## Assistant connections (MCP)
+
+Members can connect an OAuth-capable assistant to
+`https://api.raccoonbets.org/mcp`, the server URL also shown under **Account →
+Connected apps**:
+
+- **Claude or ChatGPT:** add the URL as a custom connector that signs in with
+  OAuth.
+- **Claude Code:** run
+  `claude mcp add --transport http raccoon-bets https://api.raccoonbets.org/mcp`,
+  then authenticate from `/mcp`.
+- **Codex:** run `codex mcp add raccoon-bets --url https://api.raccoonbets.org/mcp`,
+  then `codex mcp login raccoon-bets`.
+
+Assistants register themselves through dynamic client registration. Hosted
+clients use `https` redirects; command-line and desktop clients may use an
+`http` loopback redirect (`localhost`, `127.0.0.1`, or `[::1]`) on any port. The
+browser opens the existing Raccoon Bets login, then asks which groups to share
+and whether to allow actions. No groups are selected initially; access defaults
+to read-only, and a read-only connection is offered only the read tools.
+
+Read access includes group settings and members, markets and positions,
+discussions, balances, settlement suggestions, and recorded settlements. Write
+access adds market creation/editing, the member's own bets, comments, eligible
+market resolution/voiding, and settlement recording/voiding. Existing creator,
+oracle, admin, and payment-party permissions still apply. The connection does
+not expose group administration, account management, market deletion, resolution
+correction, or other members' bet cancellation. Recording a settlement does not
+initiate a payment.
+
+Connections expire after 30 days. **Account → Connected apps** lists each
+connection that has issued a token and has not expired or been revoked;
+**Revoke access** invalidates it immediately. To change groups or permissions, revoke
+and reconnect from the assistant. Newly joined groups are not added automatically;
+leaving a group or its suspension removes access immediately.
+
+### Deployment
+
+Run `bin/rails db:migrate` and deploy both the backend and frontend before setting
+`MCP_ENABLED=true` on the backend. The feature is disabled by default outside the
+`cypress` browser-test environment. Setting it to `false` disables MCP and new
+OAuth requests while keeping account-side revocation available. No additional
+process, sticky sessions, or third-party identity provider is required.
+
+OAuth uses authorization codes with S256 PKCE, hashed access and refresh tokens,
+15-minute access tokens, and a fixed 30-day consent lifetime. Refresh tokens
+rotate on every use; replaying a rotated token more than 5 seconds later
+revokes the whole connection. Tokens are bound to the configured API origin plus
+`/mcp`, which clients may name in the RFC 8707 `resource` parameter or omit;
+website JWTs and assistant tokens are not interchangeable. Configure the public origin in
+`config/urls.yml`; discovery never trusts the incoming Host header.
+
+The endpoint uses stateless Streamable HTTP and advertises these tools:
+
+| Capability | Tools |
+| --- | --- |
+| Groups | `list_groups`, `get_group`, `list_members` |
+| Markets | `list_markets`, `get_market`, `create_market`, `update_market` |
+| Positions | `set_position`, `cancel_position` |
+| Discussion | `post_comment`, `delete_comment` |
+| Resolution | `resolve_market`, `void_market` |
+| Settlement | `get_balances`, `get_settlement_suggestions`, `list_settlements`, `record_settlement`, `void_settlement` |
+
+`group_id` is the group's subdomain slug. Monetary inputs are integers in the
+group currency's minor units. `list_markets` accepts `limit` (maximum 100) and
+`offset`; `list_settlements` returns the most recent 100 records. Tool results
+include structured JSON and an equivalent text representation. Business failures
+return MCP tool errors without exposing internal exceptions.
+
+### Verification
+
+Run `RAILS_ENV=test bin/ci` for backend checks and `bin/rails zeitwerk:check` for
+an eager-load check. The frontend's `pnpm test:e2e` includes `e2e/mcp.spec.ts`,
+which exercises login, selected-group consent, code exchange, an MCP read, and
+revocation against the cypress backend. `E2E_API_URL` overrides its API address;
+`CYPRESS_BACKEND_URL`, `CYPRESS_FRONTEND_URL`, and `POSTGRES_DB` allow an isolated
+backend when running the browser test on alternate ports.
+
+Before enabling production, connect ChatGPT, Claude, Claude Code, and Codex
+against a test group and verify discovery, a read, an explicitly authorized
+write, and revocation. Local protocol and browser tests do not establish
+compatibility with real assistant clients.

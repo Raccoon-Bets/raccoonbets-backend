@@ -17,12 +17,7 @@ class Groups::BalancesController < ApplicationController
   # * `GET /groups/:group_id/balances.json`
 
   def index
-    balances = Groups::BalanceSheet.new(current_group).balances
-    names    = current_group.memberships.where(id: balances.keys).joins(:user).pluck(:id, "users.name").to_h
-
+    @balances = Groups::MemberQueries.new(current_membership).balances
     @currency = current_group.currency
-    @balances = balances.
-        sort_by { |membership_id, cents| [-cents, membership_id] }.
-        map { |membership_id, cents| {membership_id:, name: names[membership_id], balance_cents: cents} }
   end
 end

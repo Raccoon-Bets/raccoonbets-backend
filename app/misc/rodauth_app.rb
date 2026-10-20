@@ -323,5 +323,8 @@ class RodauthApp < Rodauth::Rails::App
     end
   end
 
-  route(&:rodauth)
+  route do |request|
+    # MCP and its token endpoints use OAuth credentials, not website JWTs.
+    request.rodauth unless request.path.in?(%w[/mcp /oauth/token /oauth/revoke])
+  end
 end

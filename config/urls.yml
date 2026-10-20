@@ -9,8 +9,8 @@ test:
   cable: "ws://backend.example.com/cable"
 
 cypress:
-  backend: "http://127.0.0.1:5000"
-  frontend: "http://lvh.me:4173"
+  backend: <%= ENV.fetch("CYPRESS_BACKEND_URL", "http://127.0.0.1:5000").to_json %>
+  frontend: <%= ENV.fetch("CYPRESS_FRONTEND_URL", "http://lvh.me:4173").to_json %>
   cable: "ws://127.0.0.1:8080/cable"
 
 production:
