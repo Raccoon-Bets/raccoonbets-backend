@@ -25,6 +25,18 @@ Rails.application.config.x.frontend_origin_patterns = allowed_origins
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
+    origins "*"
+    resource "/.well-known/*", headers: :any, methods: %i[get options]
+    %w[/oauth/register /oauth/token /oauth/revoke].each do |path|
+      resource path, headers: %w[Authorization Content-Type], methods: %i[post options]
+    end
+  end
+  allow do
+    origins Rails.application.config.urls.frontend, "https://chatgpt.com", "https://claude.ai"
+    resource "/mcp", headers: %w[Authorization Content-Type MCP-Protocol-Version MCP-Session-Id],
+                     methods: %i[get post delete options], expose: %w[WWW-Authenticate MCP-Session-Id]
+  end
+  allow do
     origins(*allowed_origins)
     resource "*",
              headers:     %w[Authorization X-Locale],

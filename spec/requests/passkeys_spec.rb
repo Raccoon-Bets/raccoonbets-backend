@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Passkeys", type: :request do
+RSpec.describe "Passkeys" do
   def register_key(user, webauthn_id:, label: "Phone")
     user.webauthn_keys.create!(webauthn_id:, label:, public_key: "pk-#{webauthn_id}")
   end

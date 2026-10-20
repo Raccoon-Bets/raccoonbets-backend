@@ -27,14 +27,7 @@ class Groups::PositionsController < ApplicationController
   # | `:position` | Parameterized Position attributes (`outcome_id`, `amount_cents`). |
 
   def update
-    # The market's row lock serializes positions against {Markets::Resolver},
-    # which resolves under the same lock: the lock-time validation always sees
-    # the market's committed state, so no position can slip into a resolving
-    # market.
-    @market.with_lock do
-      @position = @market.positions.find_or_initialize_by(membership: current_membership)
-      @position.update position_params
-    end
+    @position = Groups::Participation.new(current_membership).set_position(@market.id, position_params)
     respond_with @position
   end
 
@@ -47,12 +40,7 @@ class Groups::PositionsController < ApplicationController
   # * `DELETE /groups/:group_id/markets/:market_id/position.json`
 
   def destroy
-    @market.with_lock do
-      @position = @market.positions.find_by!(membership: current_membership)
-      @position.destroy if @market.open_for_trading?
-    end
-    return render_trading_closed unless @position.destroyed?
-
+    @position = Groups::Participation.new(current_membership).cancel_position(@market.id)
     respond_with @position
   end
 
@@ -64,8 +52,4 @@ class Groups::PositionsController < ApplicationController
 
   def position_params = params.expect(position: %i[outcome_id amount_cents])
 
-  def render_trading_closed
-    render json:   {error: I18n.t("groups.positions.errors.trading_closed")},
-           status: :unprocessable_content
-  end
 end

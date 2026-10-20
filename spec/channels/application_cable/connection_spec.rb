@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe ApplicationCable::Connection, type: :channel do
+RSpec.describe ApplicationCable::Connection do
   let(:user) { create :user }
 
   it "connects with a valid JWT" do

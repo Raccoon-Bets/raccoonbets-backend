@@ -19,26 +19,8 @@ class Groups::SettleUpController < ApplicationController
   # * `GET /groups/:group_id/settle_up.json`
 
   def show
-    suggestions = Groups::TransferSuggester.new(Groups::BalanceSheet.new(current_group).balances).transfers
-    payees      = current_group.memberships.
-        where(id: suggestions.map(&:payee_membership_id)).
-        includes(:user).index_by(&:id)
-
-    @currency  = current_group.currency
-    @note      = I18n.t("groups.settle_up.note", group: current_group.name)
-    @transfers = suggestions.map { |transfer| transfer.to_h.merge(payee: payee_json(payees[transfer.payee_membership_id])) }
+    result = Groups::MemberQueries.new(current_membership).settle_up
+    @currency, @note, @transfers = result.values_at(:currency, :note, :transfers)
   end
 
-  private
-
-  def payee_json(membership)
-    user = membership.user
-    {
-        membership_id:   membership.id,
-        name:            user.name,
-        venmo_handle:    user.venmo_handle,
-        paypal_handle:   user.paypal_handle,
-        cashapp_cashtag: user.cashapp_cashtag
-    }
-  end
 end

@@ -35,7 +35,7 @@ class Groups::ResolutionsController < ApplicationController
   # | `:effective_at` | Optional. When the outcome became known, for an early resolution: the pool is settled as it stood then, excluding later bets. Required to early-resolve a scheduled market; defaults to now for an open-ended one. |
 
   def create
-    Markets::Resolver.resolve(@market, outcome, current_membership, effective_at:)
+    Groups::Participation.new(current_membership).resolve_market(@market.id, params.expect(:outcome_id), effective_at:)
     render_market_detail
   end
 
@@ -68,7 +68,7 @@ class Groups::ResolutionsController < ApplicationController
   # * `DELETE /groups/:group_id/markets/:market_id/resolution.json`
 
   def destroy
-    Markets::Resolver.void @market, current_membership
+    Groups::Participation.new(current_membership).void_market(@market.id)
     render_market_detail
   end
 

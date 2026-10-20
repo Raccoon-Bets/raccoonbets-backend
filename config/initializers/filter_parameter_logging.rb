@@ -13,3 +13,7 @@ Rails.application.config.filter_parameters += %i[
 # 16-byte bearer secret) that the partial matchers above don't catch. Filter the
 # exact paths so they never reach the logs.
 Rails.application.config.filter_parameters += ["keys.auth", "keys.p256dh"]
+
+# OAuth credentials and assistant arguments can contain private member data.
+Rails.application.config.filter_parameters += %i[code code_verifier code_challenge authorization]
+Rails.application.config.filter_parameters += ["params.arguments"]

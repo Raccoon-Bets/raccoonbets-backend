@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_28_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_211000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -141,6 +141,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_120000) do
     t.check_constraint "(status::text = 'resolved'::text) = (winning_outcome_id IS NOT NULL)", name: "markets_resolved_iff_winning_outcome_check"
   end
 
+  create_table "mcp_authorization_requests", force: :cascade do |t|
+    t.string "identifier", null: false
+    t.jsonb "parameters", null: false
+    t.bigint "user_id"
+    t.datetime "expires_at", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["identifier"], name: "index_mcp_authorization_requests_on_identifier", unique: true
+    t.index ["user_id"], name: "index_mcp_authorization_requests_on_user_id"
+  end
+
+  create_table "mcp_connection_groups", force: :cascade do |t|
+    t.bigint "mcp_connection_id", null: false
+    t.bigint "group_id", null: false
+    t.index ["group_id"], name: "index_mcp_connection_groups_on_group_id"
+    t.index ["mcp_connection_id", "group_id"], name: "index_mcp_connection_groups_on_mcp_connection_id_and_group_id", unique: true
+    t.index ["mcp_connection_id"], name: "index_mcp_connection_groups_on_mcp_connection_id"
+  end
+
+  create_table "mcp_connections", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "application_id", null: false
+    t.string "scopes", null: false
+    t.string "resource", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["application_id"], name: "index_mcp_connections_on_application_id"
+    t.index ["user_id"], name: "index_mcp_connections_on_user_id"
+  end
+
   create_table "memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "group_id", null: false
@@ -152,6 +185,54 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_120000) do
     t.index ["group_id", "status"], name: "index_memberships_on_group_id_and_status"
     t.index ["group_id", "user_id"], name: "index_memberships_on_group_id_and_user_id", unique: true
     t.index ["user_id"], name: "index_memberships_on_user_id"
+  end
+
+  create_table "oauth_access_grants", force: :cascade do |t|
+    t.bigint "resource_owner_id", null: false
+    t.bigint "application_id", null: false
+    t.bigint "mcp_connection_id", null: false
+    t.string "token", null: false
+    t.integer "expires_in", null: false
+    t.text "redirect_uri", null: false
+    t.string "scopes", default: "", null: false
+    t.string "code_challenge"
+    t.string "code_challenge_method"
+    t.datetime "created_at", null: false
+    t.datetime "revoked_at"
+    t.index ["application_id"], name: "index_oauth_access_grants_on_application_id"
+    t.index ["mcp_connection_id"], name: "index_oauth_access_grants_on_mcp_connection_id"
+    t.index ["resource_owner_id"], name: "index_oauth_access_grants_on_resource_owner_id"
+    t.index ["token"], name: "index_oauth_access_grants_on_token", unique: true
+  end
+
+  create_table "oauth_access_tokens", force: :cascade do |t|
+    t.bigint "resource_owner_id", null: false
+    t.bigint "application_id", null: false
+    t.bigint "mcp_connection_id", null: false
+    t.string "token", null: false
+    t.string "refresh_token"
+    t.integer "expires_in", null: false
+    t.string "scopes", default: "", null: false
+    t.string "previous_refresh_token", default: "", null: false
+    t.datetime "created_at", null: false
+    t.datetime "revoked_at"
+    t.index ["application_id"], name: "index_oauth_access_tokens_on_application_id"
+    t.index ["mcp_connection_id"], name: "index_oauth_access_tokens_on_mcp_connection_id"
+    t.index ["refresh_token"], name: "index_oauth_access_tokens_on_refresh_token", unique: true
+    t.index ["resource_owner_id"], name: "index_oauth_access_tokens_on_resource_owner_id"
+    t.index ["token"], name: "index_oauth_access_tokens_on_token", unique: true
+  end
+
+  create_table "oauth_applications", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "uid", null: false
+    t.string "secret", null: false
+    t.text "redirect_uri", null: false
+    t.string "scopes", default: "", null: false
+    t.boolean "confidential", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
   create_table "outcomes", force: :cascade do |t|
@@ -255,9 +336,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_120000) do
   add_foreign_key "markets", "memberships", column: "oracle_id"
   add_foreign_key "markets", "memberships", column: "resolved_by_id"
   add_foreign_key "markets", "outcomes", column: "winning_outcome_id", deferrable: :deferred
+  add_foreign_key "mcp_authorization_requests", "users"
+  add_foreign_key "mcp_connection_groups", "groups", on_delete: :cascade
+  add_foreign_key "mcp_connection_groups", "mcp_connections", on_delete: :cascade
+  add_foreign_key "mcp_connections", "oauth_applications", column: "application_id"
+  add_foreign_key "mcp_connections", "users"
   add_foreign_key "memberships", "groups"
   add_foreign_key "memberships", "users"
   add_foreign_key "memberships", "users", column: "invited_by_id"
+  add_foreign_key "oauth_access_grants", "mcp_connections"
+  add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"
+  add_foreign_key "oauth_access_tokens", "mcp_connections"
+  add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_tokens", "users", column: "resource_owner_id"
   add_foreign_key "outcomes", "markets"
   add_foreign_key "position_changes", "markets"
   add_foreign_key "position_changes", "memberships"

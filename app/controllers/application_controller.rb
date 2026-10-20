@@ -27,6 +27,10 @@ class ApplicationController < ActionController::API
   rescue_from StandardError, with: :other_error
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
+  rescue_from Groups::ActionError do |error|
+    render json: {error: error.message}, status: error.status
+  end
+
   private
 
   # Renders each request's localized strings (validation errors, flash) in the

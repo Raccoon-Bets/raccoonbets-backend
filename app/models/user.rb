@@ -43,6 +43,9 @@ class User < ApplicationRecord
                         dependent:  :delete_all,
                         inverse_of: :user
 
+  has_many :mcp_connections, dependent: :destroy
+  has_many :mcp_authorization_requests, dependent: :delete_all
+
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
   has_many :push_subscriptions, dependent: :delete_all

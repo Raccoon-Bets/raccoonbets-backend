@@ -11,20 +11,14 @@ module Groups::TradingContext
   # Loads per-outcome pool totals, the viewing member's positions, and the
   # group currency for the given markets.
   def load_trading_context(markets)
-    @pools         = Position.pool_by_outcome(markets)
-    @my_positions  = current_membership.positions.where(market: markets).index_by(&:market_id)
-    @currency      = current_group.currency
+    context = Groups::MemberQueries.new(current_membership).trading_context(markets)
+    @pools, @my_positions, @currency = context.values_at(:pools, :my_positions, :currency)
   end
 
   # Loads the per-member net payout summary for a single market's detail view:
   # the sum of the market's ledger entries per membership, zero rows omitted,
   # largest winners first.
   def load_resolution_context(market)
-    nets  = market.ledger_entries.group(:membership_id).sum(:amount_cents).reject { |_, cents| cents.zero? }
-    names = current_group.memberships.where(id: nets.keys).joins(:user).pluck(:id, "users.name").to_h
-
-    @payouts = nets.
-        sort_by { |membership_id, cents| [-cents, membership_id] }.
-        map { |membership_id, cents| {membership_id:, name: names[membership_id], net_cents: cents} }
+    @payouts = Groups::MemberQueries.new(current_membership).payouts(market)
   end
 end

@@ -46,16 +46,7 @@ class Groups::SettlementsController < ApplicationController
   # | `:settlement` | Parameterized Settlement attributes (`payer_membership_id` (optional), `payee_membership_id`, `amount_cents`, `payment_method`, `note`). |
 
   def create
-    @settlement = current_group.settlements.new(settlement_params)
-    @settlement.payer_membership_id ||= current_membership.id
-    @settlement.recorded_by = current_membership
-    return render_not_a_party unless party_or_admin?
-
-    @settlement.save
-    if @settlement.persisted?
-      GroupChannel.broadcast_event current_group, :settlement_recorded
-      Notifications::DispatchJob.perform_later(event: "settlement", record_id: @settlement.id, kind: "recorded")
-    end
+    @settlement = Groups::Participation.new(current_membership).record_settlement(settlement_params)
     respond_with @settlement
   end
 
@@ -68,12 +59,7 @@ class Groups::SettlementsController < ApplicationController
   # * `DELETE /groups/:group_id/settlements/:id.json`
 
   def destroy
-    return render_not_a_party unless party_or_admin?
-    return render_already_voided if @settlement.voided?
-
-    @settlement.void!
-    GroupChannel.broadcast_event current_group, :settlement_voided
-    Notifications::DispatchJob.perform_later(event: "settlement", record_id: @settlement.id, kind: "voided")
+    @settlement = Groups::Participation.new(current_membership).void_settlement(@settlement.id)
     render :destroy
   end
 
@@ -91,18 +77,4 @@ class Groups::SettlementsController < ApplicationController
     params.expect(settlement: %i[payer_membership_id payee_membership_id amount_cents payment_method note])
   end
 
-  def party_or_admin?
-    current_membership.admin? ||
-      [@settlement.payer_membership_id, @settlement.payee_membership_id].include?(current_membership.id)
-  end
-
-  def render_not_a_party
-    render json:   {error: I18n.t("groups.settlements.errors.not_a_party")},
-           status: :forbidden
-  end
-
-  def render_already_voided
-    render json:   {error: I18n.t("groups.settlements.errors.already_voided")},
-           status: :unprocessable_content
-  end
 end

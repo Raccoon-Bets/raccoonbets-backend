@@ -37,6 +37,18 @@ Rack::Attack.throttle("push-subscriptions/ip", limit: 20, period: 1.hour) do |re
   req.ip if req.path == "/account/push_subscriptions" && req.post?
 end
 
+Rack::Attack.throttle("oauth-registration/ip", limit: 20, period: 1.hour) do |req|
+  req.ip if req.path == "/oauth/register" && req.post?
+end
+
+Rack::Attack.throttle("oauth/ip", limit: 60, period: 5.minutes) do |req|
+  req.ip if req.path.start_with?("/oauth/") && req.path != "/oauth/register"
+end
+
+Rack::Attack.throttle("mcp/ip", limit: 120, period: 1.minute) do |req|
+  req.ip if req.path == "/mcp"
+end
+
 Rack::Attack.throttled_responder = ->(request) do
   retry_after = (request.env["rack.attack.match_data"] || {})[:period].to_i
   [429, {"Content-Type" => "application/json", "Retry-After" => retry_after.to_s}, [{error: "Too many requests"}.to_json]]

@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "PushSubscriptions", type: :request do
+RSpec.describe "PushSubscriptions" do
   let(:user) { create(:user) }
   let(:payload) do
     {endpoint: "https://push.example.com/abc", keys: {p256dh: "key", auth: "secret"}, user_agent: "UA"}
