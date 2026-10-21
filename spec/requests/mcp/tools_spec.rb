@@ -63,11 +63,11 @@ RSpec.describe "MCP tools" do
   context "with a read-only connection" do
     let(:scopes) { "mcp:read" }
 
-    it "offers only the read tools" do
+    it "offers only the read tools and refuses write calls as read-only" do
       expect(tool_names).to include("list_groups", "get_market")
       expect(tool_names).not_to include("set_position", "record_settlement")
-      rpc("tools/call", {name: "set_position", arguments: bet})
-      expect(response.parsed_body.dig("error", "data")).to include("Tool not found")
+      expect(call_tool("set_position", bet)).to include("isError" => true)
+      expect(response.body).to include("This connection has read-only access.")
       expect(member.positions).to be_empty
     end
   end

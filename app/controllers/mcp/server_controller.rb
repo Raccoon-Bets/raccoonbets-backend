@@ -3,7 +3,8 @@
 # The member MCP server's stateless Streamable HTTP transport. Each request
 # presents an OAuth access token issued under an active {McpConnection} and
 # gets a fresh server whose tools act as that connection's member
-# ({Mcp::ToolContext}). Read-only connections are offered only the read tools.
+# ({Mcp::ToolContext}). Read-only connections are offered only the read tools,
+# and calling a write tool anyway returns a read-only tool error.
 # A missing or unusable token renders 401 with an RFC 6750 challenge pointing
 # at the protected-resource metadata.
 
@@ -21,9 +22,10 @@ class Mcp::ServerController < ActionController::API
 
   def handle
     context = Mcp::ToolContext.new(@token)
-    server = MCP::Server.new(name: "raccoon_bets", version: "1.0.0", tools: Mcp::Tools.available(writable: context.writable?),
-                             server_context: context,
-                             configuration: MCP::Configuration.new(exception_reporter: ->(error, _) { Sentry.capture_exception(error) }))
+    server = Mcp::MemberServer.new(name: "raccoon_bets", version: "1.0.0", tools: Mcp::Tools.available(writable: true),
+                                   listed_tools: Mcp::Tools.available(writable: context.writable?),
+                                   server_context: context,
+                                   configuration: MCP::Configuration.new(exception_reporter: ->(error, _) { Sentry.capture_exception(error) }))
     transport = MCP::Server::Transports::StreamableHTTPTransport.new(
       server, stateless: true, serve_subscriptions_listen: false,
       allowed_hosts: [URI(Mcp::Configuration.issuer).host],
