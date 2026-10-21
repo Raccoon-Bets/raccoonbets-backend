@@ -28,7 +28,7 @@ RSpec.describe Notifications::DispatchJob do
     described_class.perform_now(event: "market_resolved", record_id: market.id, kind: "resolved")
 
     expect(enqueued_jobs.select { |j| j[:job] == WebPush::DeliverJob }).not_to be_empty
-    expect(enqueued_jobs.select { |j| j[:job] == ActionMailer::MailDeliveryJob }).to be_empty
+    expect(enqueued_jobs.select { |j| j[:job] == MailDeliveryJob }).to be_empty
   end
 
   it "notifies all active members except the creator on market_created" do
@@ -80,12 +80,12 @@ RSpec.describe Notifications::DispatchJob do
     end.not_to change(enqueued_jobs, :size)
   end
 
-  # Inspects the real enqueued ActionMailer::MailDeliveryJob args. The mailer is
+  # Inspects the real enqueued MailDeliveryJob args. The mailer is
   # non-parameterized, so its kwargs are serialized under args[3]["args"][0],
   # with each record represented by its GlobalID.
   def enqueued_mail_for?(user, mailer_method)
     enqueued_jobs.any? do |job|
-      next false unless job[:job] == ActionMailer::MailDeliveryJob
+      next false unless job[:job] == MailDeliveryJob
 
       mailer_class, method_name, _delivery, kwargs = job[:args]
       next false unless mailer_class == "NotificationMailer" && method_name == mailer_method.to_s

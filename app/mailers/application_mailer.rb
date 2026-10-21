@@ -7,8 +7,16 @@
 class ApplicationMailer < ActionMailer::Base
   default from: "donotreply@raccoonbets.org"
   layout "mailer"
+  self.delivery_job = MailDeliveryJob
+  after_action :set_idempotency_key
 
   private
+
+  # Passes the delivering job's key to Resend, which ignores repeat sends with
+  # the same key.
+  def set_idempotency_key
+    message[:options] = {idempotency_key: Current.mail_delivery_key} if Current.mail_delivery_key
+  end
 
   # Sends the mail in the recipient's stored locale (emails ignore the
   # request's negotiated locale).

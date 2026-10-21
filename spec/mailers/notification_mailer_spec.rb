@@ -38,4 +38,11 @@ RSpec.describe NotificationMailer do
     expect(mail.body.encoded).to include("recorded")
     expect(mail.body.encoded).not_to include("translation missing")
   end
+
+  it "sends a later delivery with an idempotency key that retries of its job reuse" do
+    job = described_class.market_closing_soon(user:, market:).deliver_later
+    2.times { job.perform_now }
+    keys = ActionMailer::Base.deliveries.last(2).map { it[:options].unparsed_value[:idempotency_key] }
+    expect(keys).to eq(["mail-delivery/#{job.job_id}"] * 2)
+  end
 end
