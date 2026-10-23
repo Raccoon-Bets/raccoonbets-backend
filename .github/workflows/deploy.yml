@@ -24,7 +24,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: Set up flyctl
@@ -32,7 +32,7 @@ jobs:
       - name: Deploy to Fly.io
         run: flyctl deploy --remote-only
       - name: Create Sentry release
-        uses: getsentry/action-release@v3
+        uses: getsentry/action-release@v3.7.2
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: timcodes

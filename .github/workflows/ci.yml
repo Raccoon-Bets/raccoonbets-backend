@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18.3
+        image: postgres:18
         env:
           POSTGRES_DB: raccoonbets_test
           POSTGRES_USER: raccoonbets
@@ -24,7 +24,7 @@ jobs:
         ports:
           - "5432:5432"
       redis:
-        image: redis
+        image: redis:8
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -33,9 +33,9 @@ jobs:
         ports:
           - "6379:6379"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@v1.336.0
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -61,9 +61,9 @@ jobs:
     name: Linters
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@v1.336.0
         with:
           ruby-version: .ruby-version
           bundler-cache: true

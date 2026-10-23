@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby "4.0.7"
+ruby "~> 4.0.0"
 
 # CORE
 gem "bootsnap", require: false
@@ -14,10 +14,9 @@ gem "responders"
 # FRAMEWORK
 gem "anycable-rails"
 gem "bcrypt"
-gem "doorkeeper", "~> 5.9.9"
+gem "doorkeeper"
 gem "jwt"
-gem "kredis"
-gem "mcp", "~> 1.8"
+gem "mcp"
 gem "omniauth-apple"
 gem "omniauth-google-oauth2"
 gem "omniauth-rails_csrf_protection"
