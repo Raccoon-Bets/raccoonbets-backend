@@ -47,7 +47,7 @@ kill_timeout = 30
       X-Forwarded-Proto = 'https'
 
 # Swap absorbs memory spikes instead of letting the kernel OOM-kill the
-# server; Puma plus the in-Puma Solid Queue processes need the headroom.
+# server; Puma plus the embedded Sidekiq workers need the headroom.
 swap_size_mb = 512
 
 [[vm]]

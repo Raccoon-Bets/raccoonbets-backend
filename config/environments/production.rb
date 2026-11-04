@@ -51,7 +51,7 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries  = true
   config.action_mailer.default_url_options = {host: Rails.application.config.urls.frontend}
 
-  # Background jobs run on Sidekiq (Redis-backed) so Postgres can scale to zero.
+  # Background jobs run on Sidekiq (Redis-backed), embedded in Puma.
   config.active_job.queue_adapter = :sidekiq
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
