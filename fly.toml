@@ -58,7 +58,7 @@ kill_timeout = 30
 swap_size_mb = 512
 
 [[vm]]
-  memory = '1gb'
+  memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
 
