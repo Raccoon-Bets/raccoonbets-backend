@@ -6,7 +6,9 @@ class MetricsController < ActionController::API
   def show
     Yabeda.collectors.each(&:call)
 
-    _, headers, body = Yabeda::Prometheus::Exporter.rack_app.call(request.env)
+    # Uncompressed, because only the content type is copied onto the response:
+    # a gzipped body would reach the scraper without its Content-Encoding.
+    _, headers, body = Yabeda::Prometheus::Exporter.rack_app(use_deflater: false).call(request.env)
     response_body = []
     body.each { |chunk| response_body << chunk } # rubocop:disable Style/MapIntoArray
     body.close if body.respond_to?(:close)
