@@ -37,17 +37,14 @@ as siblings. To run the whole stack in development, create a `Procfile` in the
 parent directory such as:
 
 ```procfile
-backend: cd Backend && PORT=5000 ANYCABLE_HTTP_RPC=true rvm 4.0.9@raccoonbets do rails server
+backend: cd Backend && PORT=5000 rvm 4.0.9@raccoonbets do rails server
 frontend: cd Frontend && pnpm dev
-ws: cd Backend && rvm 4.0.9@raccoonbets do bin/anycable-go --port=8080 --rpc_host=http://localhost:5000/_anycable
 ```
 
 `PORT=5000` matches `config/urls.yml` and the front-end's `.env` files; Puma
-would otherwise default to 3000. `ANYCABLE_HTTP_RPC` mounts AnyCable's RPC
-endpoint at `/_anycable` inside the Rails server, the way production runs it, so
-no separate RPC process is needed. Pass `--port` to `anycable-go` explicitly: it
-also reads `$PORT`, which overmind sets per-process. Sidekiq runs embedded in
-Puma (see `config/puma.rb`), so it needs no process of its own either.
+would otherwise default to 3000. Action Cable (Redis adapter) is served by the
+same Rails server at `/cable`, and Sidekiq runs embedded in Puma (see
+`config/puma.rb`), so neither needs a process of its own.
 
 Postgres and Redis are expected to be running already, e.g. as brew services
 (`brew services start postgresql@18 redis`).
@@ -81,9 +78,9 @@ defined in the `deploy.yml` workflow, runs after CI completes.
 ## Architecture
 
 Raccoon Bets is a Ruby on Rails API paired with an independent Vue 3 front-end.
-An nginx proxy (the `raccoonbets-proxy` app) is the public front door at
-`api.raccoonbets.org`: it routes `/cable` to the AnyCable WebSocket server
-(`raccoonbets-anycable`) and everything else to this Rails app.
+Cloudflare proxies `api.raccoonbets.org` straight to this Rails app, which
+serves both the HTTP API and the Action Cable WebSocket at `/cable` from the
+same Puma process.
 
 ### Authentication
 

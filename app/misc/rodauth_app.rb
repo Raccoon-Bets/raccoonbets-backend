@@ -324,10 +324,7 @@ class RodauthApp < Rodauth::Rails::App
   end
 
   route do |request|
-    # MCP and AnyCable authenticate their own bearer credentials.
-    request.rodauth unless request.path.in?(%w[
-        /mcp /oauth/token /oauth/revoke
-        /_anycable/connect /_anycable/command /_anycable/disconnect
-    ])
+    # MCP authenticates its own bearer credentials.
+    request.rodauth unless request.path.in?(%w[/mcp /oauth/token /oauth/revoke])
   end
 end

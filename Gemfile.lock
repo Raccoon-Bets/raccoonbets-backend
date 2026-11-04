@@ -82,21 +82,6 @@ GEM
     android_key_attestation (0.3.0)
     anonymous_loader (0.1.5)
       version_gem (~> 1.1, >= 1.1.17)
-    anycable (1.6.4)
-      anycable-core (= 1.6.4)
-      grpc (~> 1.6)
-    anycable-core (1.6.4)
-      anyway_config (~> 2.2)
-      base64 (>= 0.2)
-      google-protobuf (~> 4)
-      stringio (~> 3)
-    anycable-rails (1.6.2)
-      anycable
-      anycable-rails-core (= 1.6.2)
-    anycable-rails-core (1.6.2)
-      actioncable (>= 7.0, < 9.0)
-      anycable-core (~> 1.6.0)
-      globalid
     anyway_config (2.9.1)
       ruby-next-core (~> 1.0)
     auth-sanitizer (0.2.5)
@@ -168,50 +153,6 @@ GEM
       raabro (~> 1.4)
     globalid (1.4.0)
       activesupport (>= 6.1)
-    google-protobuf (4.36.2)
-      bigdecimal
-      rake (~> 13.3)
-    google-protobuf (4.36.2-aarch64-linux-gnu)
-      bigdecimal
-      rake (~> 13.3)
-    google-protobuf (4.36.2-aarch64-linux-musl)
-      bigdecimal
-      rake (~> 13.3)
-    google-protobuf (4.36.2-arm64-darwin)
-      bigdecimal
-      rake (~> 13.3)
-    google-protobuf (4.36.2-x86_64-darwin)
-      bigdecimal
-      rake (~> 13.3)
-    google-protobuf (4.36.2-x86_64-linux-gnu)
-      bigdecimal
-      rake (~> 13.3)
-    google-protobuf (4.36.2-x86_64-linux-musl)
-      bigdecimal
-      rake (~> 13.3)
-    googleapis-common-protos-types (1.25.0)
-      google-protobuf (~> 4.26)
-    grpc (1.85.0)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
-    grpc (1.85.0-aarch64-linux-gnu)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
-    grpc (1.85.0-aarch64-linux-musl)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
-    grpc (1.85.0-arm64-darwin)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
-    grpc (1.85.0-x86_64-darwin)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
-    grpc (1.85.0-x86_64-linux-gnu)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
-    grpc (1.85.0-x86_64-linux-musl)
-      google-protobuf (>= 3.25, < 5.0)
-      googleapis-common-protos-types (~> 1.0)
     hana (1.3.7)
     hashdiff (1.2.1)
     hashie (5.2.0)
@@ -492,7 +433,6 @@ GEM
     snaky_hash (2.0.9)
       hashie (>= 0.1.0, < 6)
       version_gem (~> 1.1, >= 1.1.16)
-    stringio (3.2.0)
     thor (1.5.0)
     tilt (2.9.0)
     timeout (0.6.1)
@@ -561,7 +501,6 @@ PLATFORMS
 
 DEPENDENCIES
   alba
-  anycable-rails
   bcrypt
   binding_of_caller
   bootsnap
@@ -627,10 +566,6 @@ CHECKSUMS
   alba (4.0.2) sha256=67ce2694b60db9ebf25d0b98f342dcc2b002cd494e1f21effd047a402c5a6115
   android_key_attestation (0.3.0) sha256=467eb01a99d2bb48ef9cf24cc13712669d7056cba5a52d009554ff037560570b
   anonymous_loader (0.1.5) sha256=c96a4a1b5f49f320037fae63e931ac15b3823686e4f0ee6f24f75a0ade4227cb
-  anycable (1.6.4) sha256=a440dd44d4d8dc45b18751b041e775e0b98df458b1d8043b511903423a2f9118
-  anycable-core (1.6.4) sha256=17073a3c744d7057e43bc7ed2cbdc1d50f173bb0c874109c55a49c7b95819396
-  anycable-rails (1.6.2) sha256=954fd30f0f91825a06122da85abbf5b962d22fe0f4f3a2b5b262d4b98f5f3582
-  anycable-rails-core (1.6.2) sha256=868e31c1df0aa3096073fa59df5c9815cdaaf2e798578d874f598044418f6d13
   anyway_config (2.9.1) sha256=150b928af87c7a86d9b0776b8f0236c2876e6040478f3d9ca814aa7de958fec8
   auth-sanitizer (0.2.5) sha256=eec0f5ee354931a1431be6f7025bc38d03db1731a2185726cbe6248e49bee177
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
@@ -672,21 +607,6 @@ CHECKSUMS
   faraday-net_http (3.5.0) sha256=2e7094c34e38754ee048cc3df47376f8657005d9375f8473bce1c3b526a22e36
   fugit (1.14.0) sha256=e311a9cc85a54bb67649df45060e721282a1e2c8ebad40e41874a3a7d576f37e
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
-  google-protobuf (4.36.2) sha256=2f8daff50ae14aad36ab0ccdcf284065fa71d726c444efe114e6db82ffe62494
-  google-protobuf (4.36.2-aarch64-linux-gnu) sha256=c3279ec6eaa59f6ed6276eda2a33cffb4306471183ab79a332e698b8564f5169
-  google-protobuf (4.36.2-aarch64-linux-musl) sha256=0772c9dde1e6dce9a6b44d1d35c28c29adee99d9bd6aff5e21840daeb22161ce
-  google-protobuf (4.36.2-arm64-darwin) sha256=f70d810e6bbab9d8ad9c1d5fd685a21de4c10ad3ad32efb9455e17e5b1286917
-  google-protobuf (4.36.2-x86_64-darwin) sha256=8d1bd2a344f7f589703b202ad2ee4cca8ef731b4ced45782ef92d385967384ba
-  google-protobuf (4.36.2-x86_64-linux-gnu) sha256=d25a820873e423f1d209ae8c672a4a28b019e2429debd0901d26670a0b4e14db
-  google-protobuf (4.36.2-x86_64-linux-musl) sha256=0fa17686c896da96a60a705e56ddc7d4ff56413f52787c655bd4c9fb33ffe14f
-  googleapis-common-protos-types (1.25.0) sha256=3eac7998e9e52f506d5a68d944284b8d2f6d65d744ab92a0cdd269198a009d15
-  grpc (1.85.0) sha256=790fb8073453a7a4e4ade9ab265b92d6e8129f60c8ddae06cc9e3cb18e3e2366
-  grpc (1.85.0-aarch64-linux-gnu) sha256=d38ea50e5b45ce7ee8416b522e5926d271a94f8a3346d886625efe0043c6e2bd
-  grpc (1.85.0-aarch64-linux-musl) sha256=a84380f5586ae7d6393f69543c07ff5c85758236f52ebdc02c675530d2154015
-  grpc (1.85.0-arm64-darwin) sha256=27441b9851dbb07b57442b54cfaa4c31a6f0446a409bf0d932c1d0f94fc243b7
-  grpc (1.85.0-x86_64-darwin) sha256=e451ef4d733408530db44028197e8d9449743fcaed2ef81801e537a3c03d1516
-  grpc (1.85.0-x86_64-linux-gnu) sha256=1623b7d7c9a7c8a2f4709ffa00ad98fb873a530cf7003de76fc9136adebcaa9d
-  grpc (1.85.0-x86_64-linux-musl) sha256=dfc3ffa78de52c9b491d580ca445e0a4f62fbbc88c5d9e0c24abcdb812133d7b
   hana (1.3.7) sha256=5425db42d651fea08859811c29d20446f16af196308162894db208cac5ce9b0d
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   hashie (5.2.0) sha256=357a22635195c2e3911fbbc3de9a7d528843d1f42ab0aae02171048f16332d72
@@ -792,7 +712,6 @@ CHECKSUMS
   sidekiq-cron (2.4.0) sha256=25595c5aee0c16d13a89466e5108af047fa4cfbf388199b39e1a600ca39472d4
   simpleidn (0.3.0) sha256=12ca730bed2f3db04d11e9bfd1bca3e11fb37f55b21eb2e9793fb5814bf54d03
   snaky_hash (2.0.9) sha256=e93e6ec80632f8c8c4a3fe6e25d51eaef253e0e58dc7100f0f8370320feb3128
-  stringio (3.2.0) sha256=c37cb2e58b4ffbd33fe5cd948c05934af997b36e0b6ca6fdf43afa234cf222e1
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   tilt (2.9.0) sha256=da5735d0280bba96e9a91041bb14aee435ccad5c17b0fa519249ae543d9aa3a5
   timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb

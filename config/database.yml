@@ -1,8 +1,9 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  # Cover Puma's threads plus the embedded Sidekiq workers (concurrency 2).
-  pool: <%= ENV.fetch('RAILS_MAX_THREADS') { 3 }.to_i + 2 %>
+  # Cover Puma's threads, the embedded Sidekiq workers (concurrency 2), and
+  # Action Cable's worker pool (worker_pool_size 2).
+  pool: <%= ENV.fetch('RAILS_MAX_THREADS') { 3 }.to_i + 4 %>
   owner: raccoonbets
   username: raccoonbets
 

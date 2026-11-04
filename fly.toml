@@ -2,8 +2,9 @@
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
-# This app is private: it has no public IPs and is reachable only via
-# raccoonbets-backend.flycast from the raccoonbets-proxy app.
+# This app is public: Cloudflare proxies api.raccoonbets.org to it directly,
+# for both the HTTP API and the /cable WebSocket. raccoonbets-frontend reaches
+# /auth/ over the private raccoonbets-backend.flycast address.
 
 app = 'raccoonbets-backend'
 primary_region = 'sjc'
@@ -30,6 +31,12 @@ kill_timeout = 30
   auto_start_machines = true
   min_machines_running = 1
   processes = ['app']
+
+  # Each WebSocket client holds a connection open.
+  [http_service.concurrency]
+    type = 'connections'
+    soft_limit = 200
+    hard_limit = 250
 
 [checks]
   [checks.status]

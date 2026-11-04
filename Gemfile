@@ -12,7 +12,6 @@ gem "rails"
 gem "responders"
 
 # FRAMEWORK
-gem "anycable-rails"
 gem "bcrypt"
 gem "doorkeeper"
 gem "jwt"

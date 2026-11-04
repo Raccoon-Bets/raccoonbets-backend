@@ -23,6 +23,9 @@ allowed_origins =
 # the origin it redirects the browser back to against this same trusted set.
 Rails.application.config.x.frontend_origin_patterns = allowed_origins
 
+# WebSocket connections are accepted from the same frontend origins.
+Rails.application.config.action_cable.allowed_request_origins = allowed_origins
+
 # Hosted assistants whose browser clients call the MCP endpoint directly.
 # Shared with the MCP transport's origin check (Mcp::ServerController).
 Rails.application.config.x.mcp_assistant_origins = %w[https://chatgpt.com https://claude.ai].freeze

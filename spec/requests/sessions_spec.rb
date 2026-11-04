@@ -71,26 +71,6 @@ RSpec.describe "sessions" do
     end
   end
 
-  describe "AnyCable RPC authentication" do
-    let(:rpc_request) do
-      endpoint = Rack::URLMap.new("/_anycable" => AnyCable::HTTRPC::Server.new(token: "rpc-secret"))
-      Rack::MockRequest.new(Rodauth::Rails::Middleware.new(endpoint))
-    end
-
-    it "passes the RPC bearer token to AnyCable while keeping website JWT authentication" do
-      rpc = rpc_request.post("/_anycable/connect", "HTTP_AUTHORIZATION" => "Bearer rpc-secret",
-                                                   "CONTENT_TYPE" => "application/json", input: "")
-      expect(rpc.status).to eq(422)
-
-      unauthorized = rpc_request.post("/_anycable/connect", "HTTP_AUTHORIZATION" => "Bearer wrong-secret",
-                                                            "CONTENT_TYPE" => "application/json", input: "")
-      expect(unauthorized.status).to eq(401)
-
-      post "/logout", headers: {"Authorization" => "Bearer rpc-secret"}, as: :json
-      expect(response).to have_http_status(:bad_request)
-    end
-  end
-
   describe "POST /logout" do
     it "returns success when authenticated" do
       post "/logout",

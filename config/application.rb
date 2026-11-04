@@ -62,8 +62,10 @@ module Raccoonbets
 
     config.urls = config_for(:urls)
 
-    config.action_cable.url                     = config.urls.cable
-    config.action_cable.allowed_request_origins = [config.urls.frontend]
+    config.action_cable.url              = config.urls.cable
+    # Action Cable runs connect/subscribe callbacks (which query the database)
+    # on its own worker pool; config/database.yml sizes the pool to include it.
+    config.action_cable.worker_pool_size = 2
 
     config.active_record.encryption.support_sha1_for_non_deterministic_encryption = false
 
@@ -75,7 +77,7 @@ module Raccoonbets
     }
 
     config.host_authorization = {
-        exclude: ->(request) { request.path.start_with?("/up", "/_anycable") || request.path == "/metrics" }
+        exclude: ->(request) { request.path.start_with?("/up") || request.path == "/metrics" }
     }
 
     # ── OmniAuth session ──────────────────────────────────────────────────
