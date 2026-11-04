@@ -10,13 +10,13 @@
 # socket on send and reconnect, absorbing the cost on this side instead of
 # letting it bubble up as a 504.
 #
-# Skips Fly's health-check path. Errors are swallowed: rack-attack falls
-# open on cache failures by design, and a transient Redis blip should not
-# 500 the site.
+# Skips Fly's health-check and metrics paths. Errors are swallowed:
+# rack-attack falls open on cache failures by design, and a transient Redis
+# blip should not 500 the site.
 
 class VerifyRedisConnection
 
-  SKIP_PATHS = ["/up"].freeze
+  SKIP_PATHS = ["/up", "/metrics"].freeze
 
   def initialize(app)
     @app = app
