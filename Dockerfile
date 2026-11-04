@@ -46,8 +46,12 @@ FROM base
 # Install packages needed for deployment
 # hadolint ignore=DL3008
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl postgresql-client && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives
+    apt-get install --no-install-recommends -y curl libjemalloc2 postgresql-client && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives && \
+    ln -s /usr/lib/"$(uname -m)"-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
+
+# Reduce memory fragmentation
+ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
