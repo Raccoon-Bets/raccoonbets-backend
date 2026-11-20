@@ -38,6 +38,7 @@ RSpec.describe "sessions" do
       expect(response).to have_http_status(:unauthorized)
       body = response.parsed_body
       expect(body["error"]).to be_present
+      expect(response.headers["Authorization"]).to be_blank
     end
   end
 

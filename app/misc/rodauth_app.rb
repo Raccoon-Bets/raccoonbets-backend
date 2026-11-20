@@ -61,7 +61,8 @@ class RodauthApp < Rodauth::Rails::App
     # so the client treats it as an auth challenge and refreshes transparently.
     expired_jwt_access_token_status 401
 
-    # Include email in JWT payload for Action Cable.
+    # Include the logged-in account's email in the JWT payload for the SPA.
+    # A token names only the account its session is logged in as.
     jwt_session_hash do
       h = super()
       # The OmniAuth routes run in cookie-session mode (see only_json? below),
@@ -69,15 +70,23 @@ class RodauthApp < Rodauth::Rails::App
       # plain hash JWT mode provides. Coerce it so JWT.encode serializes the
       # claims instead of the object's #to_s.
       h = h.to_hash unless h.kind_of?(Hash)
-      h[:e] = account[:email] if account
+      h[:e] = account[:email] if account && account_id == session_value
       h
     end
+
+    # Rodauth binds each WebAuthn challenge to the session that requested it,
+    # so a response issuing a discoverable-credential (autofill) passkey login
+    # challenge must carry that session's JWT even though no account is logged
+    # in yet; the SPA sends it back only on the request completing the
+    # ceremony. Only a challenge issued before any account is loaded
+    # qualifies, so that token never belongs to an account.
+    issues_webauthn_login_challenge = -> { !account && json_response.key?(webauthn_auth_challenge_hmac_param) }
 
     # Suppress the empty JWT that Rodauth would otherwise emit when the
     # session contains no account_id (e.g. after an unverified signup or
     # a failed login attempt).
     set_jwt_token do |token|
-      super(token) if session[session_key]
+      super(token) if session[session_key] || instance_exec(&issues_webauthn_login_challenge)
     end
 
     # ── JWT refresh keys table ────────────────────────────────────────────
@@ -152,6 +161,28 @@ class RodauthApp < Rodauth::Rails::App
     webauthn_keys_public_key_column :public_key
     webauthn_keys_sign_count_column :sign_count
     webauthn_keys_last_use_column :last_use
+
+    # Rodauth reads a submitted WebAuthn credential through raw_param, free of
+    # the parameter size cap, but its JSON hooks test for one through
+    # param_or_nil, which drops values over the cap. A real authenticator's
+    # credential exceeds it, so without this exemption those hooks treat the
+    # submission as an options request and replace the session's challenge
+    # with a fresh one before the credential is checked against it.
+    # See https://github.com/jeremyevans/rodauth/issues/528.
+    over_max_bytesize_param_value do |key, value|
+      value if [webauthn_setup_param, webauthn_auth_param].include?(key)
+    end
+
+    # The SPA signs in only with discoverable passkeys. A passkey login that
+    # names a login would reveal whether that account exists and list its
+    # passkey credential IDs, so it is refused before Rodauth handles the
+    # route (and so before any account lookup or options are built).
+    before_rodauth do
+      next unless current_route == :webauthn_login && param_or_nil(login_param)
+
+      json_response[json_response_error_key] = webauthn_login_error_flash
+      return_json_response
+    end
 
     # ── OmniAuth (social login) ───────────────────────────────────────────
     # Google and Apple sign-in via rodauth-omniauth. The OAuth handshake runs

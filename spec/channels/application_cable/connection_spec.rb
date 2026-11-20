@@ -18,6 +18,11 @@ RSpec.describe ApplicationCable::Connection do
     expect { connect "/cable?jwt=garbage" }.to have_rejected_connection
   end
 
+  it "rejects a JWT that names a user but no logged-in account" do
+    token = JWT.encode({"e" => user.email, "exp" => 1.hour.from_now.to_i}, Rails.application.credentials.jwt_secret, "HS256")
+    expect { connect "/cable?jwt=#{token}" }.to have_rejected_connection
+  end
+
   it "rejects a JWT for an unknown user" do
     user.destroy!
     expect { connect "/cable?jwt=#{jwt_for(user)}" }.to have_rejected_connection
