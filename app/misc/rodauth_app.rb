@@ -89,6 +89,15 @@ class RodauthApp < Rodauth::Rails::App
       super(token) if session[session_key] || instance_exec(&issues_webauthn_login_challenge)
     end
 
+    # rodauth-rails resets only the Rails session, so also clear the JWT's
+    # session hash. Otherwise logout reissues a token for the account, and
+    # login carries pre-login keys (such as a WebAuthn challenge's HMAC) into
+    # the logged-in token.
+    clear_session do
+      session.clear if use_jwt?
+      super()
+    end
+
     # ── JWT refresh keys table ────────────────────────────────────────────
 
     jwt_refresh_token_table :account_jwt_refresh_keys
