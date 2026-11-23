@@ -3,8 +3,9 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 # This app is public: Cloudflare proxies api.raccoonbets.org to it directly,
-# for both the HTTP API and the /cable WebSocket. raccoonbets-frontend reaches
-# /auth/ over the private raccoonbets-backend.flycast address.
+# for both the HTTP API and the /cable WebSocket. The frontend's Cloudflare
+# Worker proxies /auth/* here via https://api.raccoonbets.org and sends
+# X-Forwarded-Host so OmniAuth builds its callback URL on the apex.
 
 app = 'raccoonbets-backend'
 primary_region = 'sjc'
