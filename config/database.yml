@@ -24,7 +24,9 @@ production:
   <<: *default
   url: <%= ENV['DATABASE_URL'] %>
   database: raccoonbets_production
-  connect_timeout: 5
+  # The Managed Postgres Developer cluster pauses after 15 idle minutes and
+  # takes up to 25 seconds to accept a connection again.
+  connect_timeout: 30
   checkout_timeout: 10
   idle_timeout: 300
   reaping_frequency: 30
